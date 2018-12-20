@@ -1,0 +1,91 @@
+---
+
+- name: Create directory for zipkin config dir
+  file:
+    path: "{{ zipkin_conf_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+  with_items:
+    - route
+    - deploymentconfig
+    - service
+
+- name: Copy service file to remote host
+  copy:
+    src: "files/service.yml"
+    dest: "{{ zipkin_conf_dir }}/service/zipkin.yml"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Copy route file to remote host
+  copy:
+    src: "files/route.yml"
+    dest: "{{ zipkin_conf_dir }}/route/zipkin.yml"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Create the zipkin deploymentconfig file by ansible template
+  template:
+    src: "{{ role_path }}/templates/deploymentconfig.j2"
+    dest: "{{ zipkin_conf_dir }}/deploymentconfig/zipkin.yml"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Export to secret file from elasticsearch secret
+  command: oc extract secret/logging-elasticsearch -n logging --to={{ zipkin_conf_dir }} --confirm
+
+- name: Check already exist zipkin-es secret
+  command: oc get secret/zipkin-es -n {{ project_name }}
+  register: zipkin_es
+  ignore_errors: True
+  changed_when: False
+
+- name: Create zipkin secret from elasticsearch secret files
+  command: oc create secret generic zipkin-es --from-file={{ zipkin_conf_dir }}/admin-ca --from-file={{ zipkin_conf_dir }}/admin-cert --from-file={{ zipkin_conf_dir }}/admin-key -n {{ project_name }}
+  when: zipkin_es.rc != 0
+
+- name: Check already exist zipkin Service
+  command: oc get svc/zipkin -n {{ project_name }}
+  register: zipkin_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Create zipkin Service
+  command: oc create -f {{ zipkin_conf_dir }}/service/zipkin.yml -n {{ project_name }}
+  when: zipkin_svc.rc != 0
+
+- name: Check already exist zipkin Route
+  command: oc get route/zipkin -n {{ project_name }}
+  register: zipkin_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Create zipkin Route
+  command: oc create -f {{ zipkin_conf_dir }}/route/zipkin.yml -n {{ project_name }}
+  when: zipkin_route.rc != 0
+
+- name: Check already exist zipkin DeploymentConfig
+  command: oc get deploymentconfig/zipkin -n {{ project_name }}
+  register: zipkin_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Create zipkin DeploymentConfig
+  command: oc create -f {{ zipkin_conf_dir }}/deploymentconfig/zipkin.yml -n {{ project_name }}
+  when: zipkin_dc.rc != 0
+
+- name: Rollout zipkin container
+  command: oc rollout latest zipkin -n {{ project_name }}
+  when: zipkin_dc.rc == 0
+
+- name: Delete directory for zipkin config dir
+  file:
+    path: "{{ zipkin_conf_dir }}"
+    state: absent
+
+...

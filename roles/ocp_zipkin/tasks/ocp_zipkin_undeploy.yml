@@ -1,0 +1,43 @@
+---
+
+- name: Check already exist zipkin-es secret
+  command: oc get secret/zipkin-es -n {{ project_name }}
+  register: zipkin_es
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zipkin-es secret
+  command: oc delete secret/zipkin-es -n {{ project_name }}
+  when: zipkin_es.rc == 0
+
+- name: Check already exist zipkin Service
+  command: oc get svc/zipkin -n {{ project_name }}
+  register: zipkin_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zipkin Servive
+  command: oc delete svc/zipkin -n {{ project_name }}
+  when: zipkin_svc.rc == 0
+
+- name: Check already exist zipkin Route
+  command: oc get route/zipkin -n {{ project_name }}
+  register: zipkin_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zipkin Route
+  command: oc delete route/zipkin -n {{ project_name }}
+  when: zipkin_route.rc == 0
+
+- name: Check already exist zipkin DeploymentConfig
+  command: oc get dc/zipkin -n {{ project_name }}
+  register: zipkin_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zipkin DeploymentConfig
+  command: oc delete dc/zipkin -n {{ project_name }}
+  when: zipkin_dc.rc == 0
+
+...

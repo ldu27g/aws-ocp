@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    zoo: kafka{{ item }}
+  name: kafka{{ item }}
+spec:
+  ports:
+    - name: kafka-broker
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+  selector:
+    component: kafka
+    kafka-node: '{{ item }}'
+  sessionAffinity: None
+  type: ClusterIP
+...

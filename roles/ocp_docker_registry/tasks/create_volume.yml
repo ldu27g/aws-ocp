@@ -1,0 +1,47 @@
+---
+
+- name: Add label to node
+  shell: oc label node {{ vars_ocp_docker_registry_node }} {{ vars_ocp_docker_registry_nodeselector }} --overwrite 
+  ignore_errors: true
+
+- name: Add scc to default serviceaccount 
+  shell: oc adm policy add-scc-to-user {{ vars_ocp_docker_registry_sa_scc }} -z {{ vars_ocp_docker_registry_sa_name }} -n {{ vars_ocp_docker_registry_project }}
+  ignore_errors: true
+
+- name: Create patch templates
+  local_action: template \
+                   src="{{ item }}" \
+                   dest='{{ role_path }}/cache/{{ item.split(".")[0] }}.json'
+  with_items:
+    - "nodeselector.j2"
+    - "containers.j2"
+
+- name: Check deploymentconfig
+  shell: oc get dc --selector docker-registry=default -o name -n {{ vars_ocp_docker_registry_project }}
+  register: reg_dc
+  changed_when: false
+
+- name: Deploymentconfig - nodeselector change -
+  shell: oc patch {{ item }} -n {{ vars_ocp_docker_registry_project }} \
+         -p {{ lookup('file','./cache/nodeselector.json') | quote }}
+  ignore_errors: true
+  with_items:
+    - "{{ reg_dc.stdout_lines }}"
+
+- name: Deploymentconfig - contaniners scc change -
+  shell: oc patch {{ item }} -n {{ vars_ocp_docker_registry_project }} \
+         -p {{ lookup('file','./cache/containers.json') | quote }}
+  ignore_errors: true
+  with_items:
+    - "{{ reg_dc.stdout_lines }}"
+ 
+- name: Docker Registry Volume change
+  shell: oc set volume {{ item }} -n {{ vars_ocp_docker_registry_project }} \
+         --add --overwrite \
+         --name=registry-storage \
+         --type=hostpath \
+         --path={{ vars_ocp_docker_registry_volume.0.hostpath }}
+  ignore_errors: true
+  with_items:
+    - "{{ reg_dc.stdout_lines }}"
+

@@ -1,0 +1,8 @@
+---
+
+- name: Config jdv coitanier
+  hosts: ocp-master
+  roles:
+    - role: ocp_jdv
+
+...

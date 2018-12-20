@@ -1,0 +1,134 @@
+---
+
+- name: Check already exist jdv ServiceAccount
+  command: oc get sa datavirt-service-account -n {{ project_name }}
+  register: jdv_sa
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv ServiceAccount
+  command: oc delete sa datavirt-service-account -n {{ project_name }}
+  when: jdv_sa.rc == 0
+
+- name: Check view role for jdv
+  shell: oc get rolebinding view -n {{ project_name }} | grep datavirt-service-account
+  register: jdv_role
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete view role from jdv serviceaccount
+  command: oc adm policy remove-role-from-user view -z datavirt-service-account -n {{ project_name }}
+  when: jdv_role.rc == 0
+
+- name: Check jdv keystore secret
+  command: oc get secret {{ jdv_apl_name }}-secret -n {{ project_name }}
+  register: jdv_ks_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv keystore secret
+  command: oc delete secret {{ jdv_apl_name }}-secret -n {{ project_name }}
+  when: jdv_ks_secret.rc == 0 
+
+- name: Check jdv datasource secret
+  command: oc get secret {{ jdv_apl_name }}-config -n {{ project_name }}
+  register: jdv_ds_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv datasource secret
+  command: oc delete secret {{ jdv_apl_name }}-config -n {{ project_name }}
+  when: jdv_ds_secret.rc == 0
+
+
+- name: Check gitbucket pull secret
+  command: oc get secret gitbucket-pull-secret -n {{ project_name }}
+  register: jdv_git_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete gitbucket pull secret
+  command: oc delete secret gitbucket-pull-secret -n {{ project_name }}
+  when: jdv_git_secret.rc == 0 
+
+- name: Check jdv input imageStream
+  shell: oc get is {{ jdv_input_is_name }} -n {{ project_name }}
+  register: jdv_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv input imagestream
+  command: oc delete is {{ jdv_input_is_name }} -n {{ project_name }}
+  when: jdv_input_is.rc == 0
+
+- name: Check jdv output imageStream
+  shell: oc get is {{ jdv_output_is_name }} -n {{ project_name }}
+  register: jdv_output_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv output imagestream
+  command: oc delete is {{ jdv_output_is_name }} -n {{ project_name }}
+  when: jdv_output_is.rc == 0
+
+- name: Check jdv deploymentconfig
+  command: oc get dc {{ jdv_apl_name }} -n {{ project_name }}
+  register: jdv_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv deploymentconfig
+  command: oc delete dc {{ jdv_apl_name }} -n {{ project_name }}
+  when: jdv_dc.rc == 0
+
+- name: Check jdv buildconfig
+  command: oc get bc {{ jdv_apl_name }} -n {{ project_name }}
+  register: jdv_bc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv buildconfig
+  command: oc delete bc {{ jdv_apl_name }} -n {{ project_name }}
+  when: jdv_bc.rc == 0
+
+- name: Check jdv route
+  command: oc get route {{ jdv_apl_name }} -n {{ project_name }}
+  register: jdv_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv route
+  command: oc delete route {{ jdv_apl_name }} -n {{ project_name }}
+  when: jdv_route.rc == 0
+
+- name: Check jdv service
+  command: oc get svc {{ jdv_apl_name }} -n {{ project_name }}
+  register: jdv_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv service
+  command: oc delete svc {{ jdv_apl_name }} -n {{ project_name }}
+  when: jdv_svc.rc == 0
+
+- name: Check jdv ping service
+  command: oc get svc {{ jdv_apl_name }}-ping -n {{ project_name }}
+  register: jdv_ping_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv ping service
+  command: oc delete svc {{ jdv_apl_name }}-ping -n {{ project_name }}
+  when: jdv_ping_svc.rc == 0
+
+- name: Check jdv template
+  shell: oc get template {{ jdv_template_name }} -n {{ project_name }}
+  register: jdv_template
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jdv template
+  command: oc delete template {{ jdv_template_name }} -n {{ project_name }}
+  when: jdv_template.rc == 0
+
+...

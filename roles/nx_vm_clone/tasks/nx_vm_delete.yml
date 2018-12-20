@@ -1,0 +1,41 @@
+---
+
+- name: Init delete_list
+  set_fact:
+    delete_list: []
+
+- name: Get VMs
+  uri:
+    url: "{{ base_url }}/vms"
+    validate_certs: no
+    force_basic_auth: yes
+    method: GET
+    status_code: 200
+    user: "{{ username }}"
+    password: "{{ password }}"
+    body_format: json
+    return_content: yes
+  register: vms_state
+
+- name: Create delete_list
+  set_fact:
+    delete_list: "{{ delete_list + [{'name': item.name, 'id': item.uuid}] }}"
+  with_items: "{{ vms_state.json.entities }}"
+
+- name: Delete VMs
+  uri:
+    url: "{{ base_url }}/vms/{{ item.1.id }}"
+    validate_certs: no
+    force_basic_auth: yes
+    method: DELETE
+    status_code: 201
+    user: "{{ username }}"
+    password: "{{ password }}"
+    body_format: json
+    return_content: yes
+  with_nested:
+    - "{{ vars_nx_vm_delete }}"
+    - "{{ delete_list }}"
+  when: ( item.0 == item.1.name )
+  changed_when: true
+

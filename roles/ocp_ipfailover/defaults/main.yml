@@ -1,0 +1,10 @@
+---
+
+vars_ocp_ipf_present: "true"
+vars_ocp_ipf_project: "test-ipf"
+vars_ocp_ipf_replicas: 1
+vars_ocp_ipf_nodeselector: "region=infra"
+vars_ocp_ipf_port: "80"
+vars_ocp_ipf_vips: "192.168.0.1"
+vars_ocp_ipf_image: "10.248.152.200:5000/openshift3/ose-keepalived-ipfailover:v3.9.30"
+

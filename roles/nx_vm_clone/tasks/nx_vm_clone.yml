@@ -1,0 +1,101 @@
+---
+
+- name: Create Userdata
+  template:
+    src: userdata.j2
+    dest: "{{ role_path }}/files/userdata"
+
+- name: Clone VM
+  uri:
+    url: "{{ base_url }}/vms/{{argument.vmid}}/clone"
+    validate_certs: no
+    force_basic_auth: yes
+    method: POST
+    status_code: 201
+    user: "{{ username }}"
+    password: "{{ password }}"
+    return_content: yes
+    body_format: json
+    body:
+      spec_list:
+        - name: "{{ argument.name }}"
+          num_cores_per_vcpu: "{{ argument.cores }}"
+          num_vcpus: "{{ argument.vcpus }}"
+          memory_mb: "{{ argument.memorymb }}"
+      vm_customization_config: { userdata : "{{ lookup( 'file',role_path + '/files/userdata') }}" }
+  changed_when: true
+  register: vm_clone
+
+- block:
+
+  - name: Get Storage Container UUID
+    uri:
+      url: "{{base_url}}/storage_containers/"
+      validate_certs: no
+      force_basic_auth: yes
+      method: GET
+      status_code: 200
+      user: "{{ username }}"
+      password: "{{ password }}"
+      body_format: json
+      return_content: yes
+    register: vms_uuid
+
+  - name: Check VMs UUID
+    uri:
+      url: "{{base_url}}/vms/"
+      validate_certs: no
+      force_basic_auth: yes
+      method: GET
+      status_code: 200
+      user: "{{ username }}"
+      password: "{{ password }}"
+      body_format: json
+      return_content: yes
+    register: vms_state
+
+  - name: Set UUID
+    set_fact:
+      'uuid': "{{ item.uuid }}"
+    with_items: "{{ vms_state.json.entities }}"
+    when: ( item.name == argument.name )
+
+  - name: Add second Disk
+    uri:
+      url: "{{ base_url }}/vms/{{uuid}}/disks/attach"
+      validate_certs: no
+      force_basic_auth: yes
+      method: POST
+      status_code: 201
+      user: "{{ username }}"
+      password: "{{ password }}"
+      return_content: yes
+      body_format: json
+      body:
+        vm_disks:
+          - vm_disk_create: { 'size': "{{ argument.second_disk_byte }}", 'storage_container_uuid': "{{ item.storage_container_uuid }}" }
+    changed_when: true
+    with_items: "{{ vms_uuid.json.entities }}"
+    when: ( item.name == argument.storage_container_name )
+
+  - name: Add third Disk
+    uri:
+      url: "{{ base_url }}/vms/{{uuid}}/disks/attach"
+      validate_certs: no
+      force_basic_auth: yes
+      method: POST
+      status_code: 201
+      user: "{{ username }}"
+      password: "{{ password }}"
+      return_content: yes
+      body_format: json
+      body:
+        vm_disks:
+          - vm_disk_create: { 'size': "{{ argument.third_disk_byte }}", 'storage_container_uuid': "{{ item.storage_container_uuid }}" }
+    changed_when: true
+    with_items: "{{ vms_uuid.json.entities }}"
+    when: ( item.name == argument.storage_container_name ) and 
+          ( argument.third_disk_byte is defined ) 
+
+  when: ( argument.second_disk_byte is defined )
+

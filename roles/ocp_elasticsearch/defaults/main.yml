@@ -1,0 +1,11 @@
+---
+
+vars_ocp_elasticsearch_volume:
+  - hostpath: "/data/elastic-vol"
+    mode: "0000"
+    owner: "root"
+    group: "root"
+vars_ocp_elasticsearch_nodeselector: "logging-infra=elasticsearch"
+vars_ocp_elasticsearch_project: "logging"
+vars_ocp_elasticsearch_sa_name: "aggregated-logging-elasticsearch"
+vars_ocp_elasticsearch_sa_scc: "privileged"

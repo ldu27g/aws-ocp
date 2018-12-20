@@ -1,0 +1,8 @@
+---
+
+- name: Config fuse on jboss eap coitanier
+  hosts: ocp-master
+  roles:
+    - role: ocp_fuse_eap
+
+...

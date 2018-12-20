@@ -1,0 +1,22 @@
+---
+
+- name: Prometheus iptables setting
+  include_tasks: iptables.yml
+  when: ( step | default(0) == 1 )
+
+- name: node-exporter daemonset setting
+  include_tasks: node-exporter.yml
+  when: ( step | default(0) == 2 )
+
+- name: Prometheus configmap setting
+  include_tasks: prometheus.yml
+  when: ( step | default(0) == 2 )
+
+- name: alertmanager configmap setting
+  include_tasks: alertmanager.yml
+  when: ( step | default(0) == 2 )
+
+- name: restart prometheus
+  include_tasks: restart_prometheus.yml
+  when: ( step | default(0) == 2 )
+

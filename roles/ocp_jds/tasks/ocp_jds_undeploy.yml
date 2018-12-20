@@ -1,0 +1,62 @@
+---
+- name: Check jds input imageStream
+  shell: oc get is {{ jds_input_is_name }} -n {{ project_name }}
+  register: jds_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jds input imagestream
+  command: oc delete is {{ jds_input_is_name }} -n {{ project_name }}
+  when: jds_input_is.rc == 0
+
+- name: Check jds output imageStream
+  shell: oc get is {{ jds_build_name }} -n {{ project_name }}
+  register: jds_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete jds output imagestream
+  command: oc delete is {{ jds_build_name }} -n {{ project_name }}
+  when: jds_input_is.rc == 0
+
+- name: Check buildconfig for jds
+  command: oc get bc {{ jds_build_name }} -n {{ project_name }} 
+  register: jds_bc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete buildconfig for jds
+  command: oc delete bc {{ jds_build_name }} -n {{ project_name }}
+  when: jds_bc.rc == 0
+
+- name: Check deploymentconfig jds
+  command: oc get dc {{ jds_build_name }} -n {{ project_name }}
+  register: jds_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete deploymentconfig for jds
+  command: oc delete dc {{ jds_build_name }} -n {{ project_name }}
+  when: jds_dc.rc == 0
+
+- name: Check service for jds
+  command: oc get svc {{ jds_build_name }} -n {{ project_name }}
+  register: jds_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete service for jds
+  command: oc delete svc {{ jds_build_name }} -n {{ project_name }}
+  when: jds_svc.rc == 0
+
+- name: Check route for jds
+  command: oc get route {{ jds_build_name }} -n {{ project_name }}
+  register: jds_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete route for jds
+  command: oc delete route {{ jds_build_name }} -n {{ project_name }}
+  when: jds_route.rc == 0
+
+...

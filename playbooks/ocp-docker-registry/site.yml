@@ -1,0 +1,16 @@
+---
+
+- name: Create Docker Registry Directory
+  hosts: docker-registry-node
+  tasks:
+    - include_role:
+        name: ocp_docker_registry
+        tasks_from: create_dir
+
+- name: Configre Docker Registry Hostpath Volume
+  hosts: masters[0]
+  tasks:
+    - include_role:
+        name: ocp_docker_registry
+        tasks_from: create_volume
+

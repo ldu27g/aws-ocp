@@ -1,0 +1,69 @@
+---
+
+- name: Check already exist zookeeper node label on infra node
+  shell: oc get nodes -l zoo-node={{ item }} | grep ocp-infra0{{ item }}.acom.local
+  register: zoo_label
+  ignore_errors: True
+  with_sequence: start=1 end={{ zoo_replica_size }}
+  changed_when: False
+
+- name: Delete zookeeper Label
+  command: oc label node ocp-infra0{{ item.item }}.acom.local zoo-node-
+  when: item.rc == 0
+  with_items: "{{ zoo_label.results }}"
+
+- name: Check already exist ConfigMap
+  command: oc get cm/zoo-cfg -n {{ project_name }}
+  register: zoo_cm
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zookeeper ConfigMap
+  command: oc delete cm/zoo-cfg -n {{ project_name }}
+  when: zoo_cm.rc == 0
+
+- name: Check already exist zookeeper ServiceAccount
+  command: oc get sa/aggregated-zookeeper -n {{ project_name }}
+  register: zoo_sa
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete zookeeper ServiceAccount
+  command: oc delete sa aggregated-zookeeper -n {{ project_name }}
+  when: zoo_sa.rc == 0
+
+- name: Check scc zookeeper role
+  shell: oc describe scc/privileged | grep system:serviceaccount:{{ project_name }}:aggregated-zookeeper
+  register: zoo_scc_role
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete privileged role from zookeeper user
+  command: oc adm policy remove-scc-from-user privileged -z aggregated-zookeeper -n {{ project_name }}
+  when: zoo_scc_role.rc == 0
+  
+- name: Check already exist zookeeper Service
+  command: oc get svc/zoo{{ item }} -n {{ project_name }}
+  register: zoo_svc
+  ignore_errors: True
+  with_sequence: start=1 end={{ zoo_replica_size }}
+  changed_when: False
+
+- name: Delete zookeeper Service
+  command: oc delete svc/zoo{{ item.item }} -n {{ project_name }}
+  when: item.rc == 0
+  with_items: "{{ zoo_svc.results }}"
+
+- name: Check already exist zookeeper DeploymentConfig
+  command: oc get dc/zookeeper-{{ item }} -n {{ project_name }}
+  register: zoo_dc
+  ignore_errors: True
+  with_sequence: start=1 end={{ zoo_replica_size }}
+  changed_when: False
+
+- name: Delete zookeeper DeploymentConfig
+  command: oc delete dc/zookeeper-{{ item.item }} -n {{ project_name }}
+  when: item.rc == 0
+  with_items: "{{ zoo_dc.results }}"
+
+...

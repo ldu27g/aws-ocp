@@ -1,0 +1,158 @@
+[masters]
+ose3-master01.acom.local
+
+[etcd]
+ose3-master01.acom.local
+
+[nodes]
+ose3-master01.acom.local openshift_node_group_name='node-config-master-infra'
+ose3-node0[1:2].acom.local openshift_node_group_name='node-config-compute'
+
+[OSEv3:children]
+masters
+nodes
+etcd
+
+[OSEv3:vars]
+ansible_user=ec2-user
+ansible_become=yes
+openshift_deployment_type=openshift-enterprise
+debug_level=2
+openshift_release="3.11"
+#openshift_image_tag=v3.11.0
+#openshift_pkg_version=-3.11.0
+#openshift_install_examples=true
+# set exact RPM version (include - prefix)
+#openshift_pkg_version=-3.11.0
+# you may also specify version and release, ie:
+#openshift_pkg_version=-3.11.0-0.126.0.git.0.9351aae.el7
+#openshift_hostname_check=true
+openshift_disable_check=disk_availability,docker_storage,memory_availability,docker_image_availability,package_availability,package_version
+# Configure usage of openshift_clock role.
+openshift_clock_enabled=true
+openshift_docker_options="--log-driver=json-file --log-opt max-size=1M  --log-opt max-file=3 --signature-verification=false --insecure-registry=172.31.0.0/16"
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++
+openshift_master_default_subdomain=54.180.165.214.xip.io
+#openshift_master_cluster_hostname=ose3-lb.test.example.com
+#openshift_master_cluster_public_hostname=
+#+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Configure the multi-tenant SDN plugin (default is 'redhat/openshift-ovs-subnet')
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+
+# Configure master API rate limits for external clients
+#openshift_master_external_ratelimit_qps=200
+#openshift_master_external_ratelimit_burst=400
+# Configure master API rate limits for loopback clients
+#openshift_master_loopback_ratelimit_qps=300
+#openshift_master_loopback_ratelimit_burst=600
+
+# Items added, as is, to end of /etc/sysconfig/docker OPTIONS
+# Default value: "--log-driver=journald"
+#openshift_docker_options="-l warn --ipv6=false"
+
+# Skip upgrading Docker during an OpenShift upgrade, leaves the current Docker version alone.
+# docker_upgrade=False
+
+
+# Enable etcd debug logging, defaults to false
+# etcd_debug=true
+# Set etcd log levels by package
+# etcd_log_package_levels="etcdserver=WARNING,security=DEBUG"
+# Comma-separated list of etcd cipher suites
+# etcd_cipher_suites="TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+
+#openshift_examples_modify_imagestreams=true
+#openshift_docker_insecure_registries=registry.example.com
+#openshift_docker_additional_registries=registry.example.com
+oreg_url=registry.redhat.io/openshift3/ose-${component}:${version}
+oreg_auth_user=defeat
+oreg_auth_password='Zaq12wsx#'
+
+# OpenShift repository configuration
+#openshift_additional_repos=[{'id': 'openshift-origin-copr', 'name': 'OpenShift Origin COPR', 'baseurl': 'https://copr-be.cloud.fedoraproject.org/results/maxamillion/origin-next/epel-7-$basearch/', 'enabled': 1, 'gpgcheck': 1, 'gpgkey': 'https://copr-be.cloud.fedoraproject.org/results/maxamillion/origin-next/pubkey.gpg'}]
+#openshift_repos_enable_testing=false
+
+# htpasswd auth
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+openshift_master_htpasswd_users={'acom': 'acom'}
+
+# LDAP auth
+#openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'insecure': 'false', 'url': 'ldap://ldap.example.com:389/ou=users,dc=example,dc=com?uid'}]
+#
+# Configure LDAP CA certificate
+# Specify either the ASCII contents of the certificate or the path to
+# the local file that will be copied to the remote host. CA
+# certificate contents will be copied to master systems and saved
+# within /etc/origin/master/ with a filename matching the "ca" key set
+# within the LDAPPasswordIdentityProvider.
+#
+#openshift_master_ldap_ca=<ca text>
+# or
+#openshift_master_ldap_ca_file=<path to local ca file to use>
+
+# Configure additional projects
+#openshift_additional_projects={'my-project': {'default_node_selector': 'label=value'}}
+
+# Enable cockpit
+#osm_use_cockpit=true
+#
+# Set cockpit plugins
+#osm_cockpit_plugins=['cockpit-kubernetes']
+
+# hostPath (local filesystem storage)
+# Suitable for "all-in-one" or proof of concept deployments
+# Must not be used for high-availability and production deployments
+#openshift_hosted_registry_storage_kind=hostpath
+#openshift_hosted_registry_storage_access_modes=['ReadWriteOnce']
+#openshift_hosted_registry_storage_hostpath_path=/var/lib/openshift_volumes
+#openshift_hosted_registry_storage_volume_size=10Gi
+
+
+# StorageClass
+# openshift_storageclass_name=gp2
+# openshift_storageclass_parameters={'type': 'gp2', 'encrypted': 'false'}
+# openshift_storageclass_mount_options=['dir_mode=0777', 'file_mode=0777']
+# openshift_storageclass_reclaim_policy="Delete"
+#
+# PersistentLocalStorage
+# If Persistent Local Storage is wanted, this boolean can be defined to True.
+# This will create all necessary configuration to use persistent storage on nodes.
+#openshift_persistentlocalstorage_enabled=False
+#openshift_persistentlocalstorage_classes=[]
+#openshift_persistentlocalstorage_path=/mnt/local-storage
+#openshift_persistentlocalstorage_provisionner_image=quay.io/external_storage/local-volume-provisioner:v1.0.1
+
+# Cluster monitoring
+#
+# Cluster monitoring is enabled by default, disable it by setting
+# openshift_cluster_monitoring_operator_install=false
+#
+# Cluster monitoring configuration variables allow setting the amount of
+# storage requested through PersistentVolumeClaims.
+#
+# openshift_cluster_monitoring_operator_prometheus_storage_capacity="50Gi"
+# openshift_cluster_monitoring_operator_alertmanager_storage_capacity="2Gi"
+
+# Logging deployment
+#openshift_logging_install_logging=true
+openshift_logging_install_logging=true
+openshift_logging_es_cluster_size=1
+openshift_logging_es_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
+openshift_logging_kibana_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
+openshift_logging_curator_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
+#openshift_logging_kibana_hostname=logging.apps.example.com
+#openshift_logging_nodeselector=
+
+# Enable service catalog
+openshift_enable_service_catalog=true
+# Enable template service broker (requires service catalog to be enabled, above)
+template_service_broker_install=true
+
+# Admission plugin config
+#openshift_master_admission_plugin_config={"ProjectRequestLimit":{"configuration":{"apiVersion":"v1","kind":"ProjectRequestLimitConfig","limits":[{"selector":{"admin":"true"}},{"maxProjects":"1"}]}},"PodNodeConstraints":{"configuration":{"apiVersion":"v1","kind":"PodNodeConstraintsConfig"}}}
+
+# Enable API service auditing
+openshift_master_audit_config={"enabled": true, "auditFilePath": "/var/log/ocp-audit.log", "maximumFileRetentionDays": 14, "maximumFileSizeMegabytes": 500, "maximumRetainedFiles": 5}
+

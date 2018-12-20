@@ -1,0 +1,8 @@
+---
+
+- name: Config jds coitanier
+  hosts: ocp-master
+  roles:
+    - role: ocp_jds
+
+...

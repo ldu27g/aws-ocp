@@ -1,0 +1,63 @@
+---
+
+- name: Check fuse on jboss eap input imageStream
+  shell: oc get is {{ fuse_eap_input_is_name }} -n {{ project_name }}
+  register: fuse_eap_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete fuse on jboss eap input imagestream
+  command: oc delete is {{ fuse_eap_input_is_name }} -n {{ project_name }}
+  when: fuse_eap_input_is.rc == 0
+
+- name: Check fuse on jboss eap output imageStream
+  shell: oc get is {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete fuse on jboss eap output imagestream
+  command: oc delete is {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_input_is.rc == 0
+
+- name: Check buildconfig for fuse on eap
+  command: oc get bc {{ fuse_eap_build_name }} -n {{ project_name }} 
+  register: fuse_eap_bc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete buildconfig for fuse on jboss eap
+  command: oc delete bc {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_bc.rc == 0
+
+- name: Check deploymentconfig fuse on jboss eap
+  command: oc get dc {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete deploymentconfig for fuse on jboss eap
+  command: oc delete dc {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_dc.rc == 0
+
+- name: Check service for fuse on jboss eap
+  command: oc get svc {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_svc
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete service for fuse on jboss eap
+  command: oc delete svc {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_svc.rc == 0
+
+- name: Check route for fuse on jboss eap
+  command: oc get route {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete route for fuse on jboss eap
+  command: oc delete route {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_route.rc == 0
+
+...

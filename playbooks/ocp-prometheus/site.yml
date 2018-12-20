@@ -1,0 +1,16 @@
+---
+
+- name: OpenShift Prometheus Node port setting
+  hosts: nodes
+  vars:
+    step: 1
+  roles:
+    - ocp_prometheus
+
+- name: OpenShift Prometheus setting
+  hosts: masters[0]
+  vars:
+    step: 2
+  roles:
+    - ocp_prometheus
+

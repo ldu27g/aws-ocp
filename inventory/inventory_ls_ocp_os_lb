@@ -1,0 +1,48 @@
+---
+
+
+lb:
+  hosts:
+    "ocp-lb01.acom.local":
+  vars:
+    ansible_ssh_user: "acom"
+    ansible_become: "yes"
+    vars_ls_ocp_os_rpms:
+      - "wget"
+      - "net-tools"
+      - "bind-utils"
+      - "iptables-services"
+      - "bridge-utils"
+      - "bash-completion"
+      - "kexec-tools"
+      - "sos"
+      - "psacct"
+      - "NetworkManager"
+      - "dnsmasq"
+      - "git-1.8.3.1-11.el7.x86_64"
+    vars_ls_ocp_os_journal_size: "10M"
+    vars_ls_ocp_os_lb_localdomain: "acom.local"
+    vars_ls_ocp_os_lb_subdomain: "dev-acom.local"
+    vars_ls_ocp_os_lb_ipaddr: "10.248.152.219"
+    vars_ls_ocp_os_lb_domain: "acom.local"
+    vars_ls_ocp_os_lb_hosts:
+      - ipaddr: "10.248.152.218"
+        hostname: "ocp-lb01.acom.local ocp-lb01 lb-ocp-master.acom.local ocp-master.acom.local"
+      - ipaddr: "10.248.152.221"
+        hostname: "ocp-master01.acom.local ocp-master01"
+      - ipaddr: "10.248.152.222"
+        hostname: "ocp-master02.acom.local ocp-master02"
+      - ipaddr: "10.248.152.223"
+        hostname: "ocp-master03.acom.local ocp-master03"
+      - ipaddr: "10.248.152.224"
+        hostname: "ocp-infra01.acom.local ocp-infra01"
+      - ipaddr: "10.248.152.225"
+        hostname: "ocp-infra02.acom.local ocp-infra02"
+      - ipaddr: "10.248.152.226"
+        hostname: "ocp-infra03.acom.local ocp-infra03"
+      - ipaddr: "10.248.152.227"
+        hostname: "ocp-worker01.acom.local ocp-worker01"
+      - ipaddr: "10.248.152.228"
+        hostname: "ocp-worker02.acom.local ocp-worker02"
+      - ipaddr: "10.248.152.229"
+        hostname: "ocp-worker03.acom.local ocp-worker03"

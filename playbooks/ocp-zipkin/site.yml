@@ -1,0 +1,8 @@
+---
+
+- name: Config zipkin coitanier
+  hosts: ocp-master
+  roles:
+    - role: ocp_zipkin
+
+...

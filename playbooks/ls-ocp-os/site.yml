@@ -1,0 +1,12 @@
+---
+
+
+- name: pre requires
+  hosts: all
+  tasks:
+    - include_role:
+        name: ls_lvm
+
+    - include_role:
+        name: ls_ocp_os
+

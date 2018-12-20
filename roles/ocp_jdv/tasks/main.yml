@@ -1,0 +1,18 @@
+---
+
+- name: Login OpenShift
+  command: oc login https://ocp-master.acom.local:8443 -u {{ ocp_user }} -p {{ ocp_password }} --insecure-skip-tls-verify=true
+  changed_when: False
+
+- name: Create project for jdv
+  include_tasks: create_project.yml
+
+- name: Deploy jdv
+  include_tasks: ocp_jdv_deploy.yml
+  when: ocp_jdv_present == "true"
+
+- name: Undeploy jdv
+  include_tasks: ocp_jdv_undeploy.yml
+  when: ocp_jdv_present == "false"
+
+...

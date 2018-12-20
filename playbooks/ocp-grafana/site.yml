@@ -1,0 +1,7 @@
+---
+
+- name: OpenShift Grafana
+  hosts: masters[0]
+  roles:
+    - ocp_grafana
+

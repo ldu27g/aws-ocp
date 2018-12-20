@@ -1,0 +1,11 @@
+---
+
+openshift_logging_namespace: "logging"
+openshift_prometheus_namespace: "openshift-metrics"
+ocp_fluentd_prometheus_port: "8085"
+ocp_fluentd_proemtheus_service: "logging-fluentd"
+ocp_fluentd_prometheus_protocol: "tcp"
+
+
+
+

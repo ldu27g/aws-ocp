@@ -1,0 +1,22 @@
+{
+    "apiVersion": "extensions/v1beta1",
+    "kind": "DaemonSet",
+    "spec": {
+        "template": {
+            "spec": {
+                "containers": [
+                    {
+                        "name": "fluentd-elasticsearch",
+                        "ports": [
+                            {
+                                "containerPort": ###PORT###,
+                                "name": "logging-fluentd",
+                                "protocol": "###PROTOCOL###"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

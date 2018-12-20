@@ -1,0 +1,151 @@
+---
+
+- name: pre requires
+  hosts: all
+  become: yes
+  remote_user: acom
+  tasks:
+
+  - name: set hostname
+    hostname:
+      name: "{{ inventory_hostname }}"
+    tags: common
+
+  - name: delete repository
+    raw: rm -rf /etc/yum.repos.d/*
+    tags: common
+
+  - name: add repository
+    copy:
+      src: Acom.repo
+      dest: /etc/yum.repos.d/acom.repo
+    tags: common
+
+  - name: yum clean all
+    raw: yum clean all
+    tags: common
+
+  - name: utils install
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - git
+    tags: common
+
+  - name: delete repository
+    raw: rm -rf /etc/yum.repos.d/*
+    tags: common
+
+  - name: add repository
+    copy:
+      src: acom.repo
+      dest: /etc/yum.repos.d/acom.repo
+    tags: common
+
+  - name: yum clean all
+    raw: yum clean all
+    tags: common
+
+  - name: utils install
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - wget
+      - net-tools
+      - bind-utils
+      - iptables-services
+      - bridge-utils
+      - bash-completion
+      - kexec-tools
+      - sos
+      - psacct
+      - NetworkManager
+      #- git
+    tags: common
+
+  - name: utils install
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items: 
+      - docker
+      - atomic-openshift-utils
+
+  - name: modify resolv.conf
+    lineinfile:
+      path: /etc/resolv.conf
+      line: "{{ item }}"
+    with_items:
+      - nameserver 10.248.152.218
+    tags: common
+
+  - name: enable NetworkManager
+    systemd:
+      name: NetworkManager
+      state: started
+      enabled: yes
+    tags: common
+
+  - name: modify NetworkManager DNS Settings
+    raw: "nmcli c mod eth0 ipv4.dns 10.248.152.218"
+    tags: common
+
+  - name: restart NetworkManager
+    systemd:
+      name: NetworkManager
+      state: restarted
+    tags: common
+
+  - name: modify docker file
+    lineinfile:
+      path: /etc/sysconfig/docker
+      regexp: "OPTIONS="
+      line: "OPTIONS='--selinux-enabled --log-driver=json-file --log-opt max-size=1M --log-opt max-file=3 --signature-verification=false  --insecure-registry 172.30.0.0/16 --insecure-registry=10.248.152.200:5000'"
+    register: dockerconfig
+
+#  - name:  modify docker-storage file
+#    lineinfile:
+#      path: /etc/sysconfig/docker-storage-setup
+#      regexp: "{{ item }}"
+#      state: absent
+#    with_items:
+#      - "^STORAGE_DRIVER"
+
+#  - name:  modify docker-storage file
+#    lineinfile:
+#      path: /etc/sysconfig/docker-storage-setup
+#      regexp: "{{ item }}"
+#      line: "{{ item }}"
+#    with_items:
+#      - "VG=docker"
+#      - "DEVS=/dev/sdb"
+
+  - name: enable docker
+    systemd:
+      name: docker
+      state: started
+    register: dockerstart
+
+  - name: enable docker
+    systemd:
+      name: docker
+      state: restarted
+    when: ( not dockerstart.changed ) or
+          ( not dockerconfig.changed )
+
+#  - name: docker login
+#    raw: docker login 10.248.152.130:5000 -u admin -p admin123
+
+  - name: copy chrony.conf
+    copy:
+      src: chrony.conf
+      dest: /etc/chrony.conf
+
+  - name: restart chronyd
+    systemd:
+      name: chronyd
+      state: restarted
+    tags: common
+

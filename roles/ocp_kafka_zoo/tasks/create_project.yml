@@ -1,0 +1,23 @@
+---
+
+- name: Check already exist kafka project
+  command: oc get project {{ project_name }}
+  register: project
+  ignore_errors: True
+  changed_when: False
+
+- name: Create kafka project
+  command: oc new-project {{ project_name }}
+  when: project.rc != 0
+
+- name: Check node-selector in kafka project
+  shell: oc export project {{ project_name }} | grep "openshift.io/node-selector"
+  register: node_selector
+  ignore_errors: True
+  changed_when: False
+
+- name: Add node-selector in kafka project
+  command: oc patch namespace {{ project_name }} -p '{"metadata":{"annotations":{"openshift.io/node-selector":""}}}'
+  when: node_selector.rc != 0
+
+...

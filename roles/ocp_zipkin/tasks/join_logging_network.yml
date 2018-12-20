@@ -1,0 +1,13 @@
+---
+
+- name: Check accessable logging pod network
+  shell: oc get netnamespaces logging | grep `oc get netnamespaces {{ project_name }} | tail -1 | awk '{ print $2 }'`
+  register: pod_network
+  ignore_errors: True
+  changed_when: False
+
+- name: Join logging pod network
+  command: oc adm pod-network join-projects --to=logging {{ project_name }}
+  when: pod_network.rc != 0
+
+...

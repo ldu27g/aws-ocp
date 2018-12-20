@@ -1,0 +1,19 @@
+---
+
+- name: Kafka config data dir
+  file:
+    path: "{{ kafka_data_dir_path }}"
+    state: "{{ kafka_data_dir_state }}"
+    owner: root
+    group: root
+    mode: 0777
+
+- name: Zookeeper config data dir
+  file:
+    path: "{{ zoo_data_dir_path }}"
+    state: "{{ zoo_data_dir_state }}"
+    owner: root
+    group: root
+    mode: 0777
+
+...

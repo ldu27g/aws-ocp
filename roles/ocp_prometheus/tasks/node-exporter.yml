@@ -1,0 +1,20 @@
+---
+
+# add scc privileged to sa prometheus-node-exporter
+- name: describe scc privileged
+  shell: "oc describe scc privileged | grep system:serviceaccount:{{ openshift_prometheus_namespace }}:prometheus-node-exporter | cat"
+  register: privileged_users
+  changed_when: false
+
+- name: describe scc privileged
+  shell: "oc adm policy -n {{ openshift_prometheus_namespace }} add-scc-to-user privileged -z prometheus-node-exporter"
+  when: ( privileged_users.stdout == "" )
+
+
+# ds prometheus-node-exporter update
+- name: ds prometheus-node-exporter update
+  shell: "oc patch -n {{ openshift_prometheus_namespace }} ds prometheus-node-exporter
+          -p \'{{ lookup( 'file',role_path + '/files/patch/patch_ds_prometheus-node-exporter.json') }}\'"
+  register: ds
+  ignore_errors: true
+

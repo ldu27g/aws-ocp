@@ -1,0 +1,38 @@
+---
+
+- name: Deploymentconfig - contaniners scc change -
+  shell: oc patch {{ argument }} -n {{  vars_ocp_elasticsearch_project }} \
+         -p {{ lookup('file','./cache/containers.json') | quote }} \
+         -n {{ vars_ocp_elasticsearch_project }}
+  ignore_errors: true
+  register: rg_dc_change_1
+
+#- name: Deploymentconfig - volume change -
+#  shell: oc patch {{ argument }} -n {{  vars_ocp_elasticsearch_project }} \
+#         -p {{ lookup('file','./cache/volume.json') | quote }} \
+#         -n {{ vars_ocp_elasticsearch_project }}
+#  ignore_errors: true
+#  register: rg_dc_change_2
+
+
+- name: Deploymentconfig - volume change -
+  shell: oc set volume {{ argument }} -n {{ vars_ocp_elasticsearch_project }} \
+         --add --overwrite \
+         --name=elasticsearch-storage \
+         --type=hostpath \
+         --path={{ vars_ocp_elasticsearch_volume.0.hostpath }}
+  register: rg_dc_change_2
+
+- block:
+
+  - name: Scale in dc {{ argument }}  --> replica=0
+    shell: oc scale {{ argument }} --replicas=0 -n {{ vars_ocp_elasticsearch_project }}
+
+  - name: Rollout latest dc {{ argument }}
+    shell: oc rollout latest {{ argument }} -n {{ vars_ocp_elasticsearch_project }}
+
+  - name: Scale out dc {{ argument }}  --> replica=1
+    shell: oc scale {{ argument }} --replicas=1 -n {{ vars_ocp_elasticsearch_project }}
+
+  when: ( rg_dc_change_1.rc != 1 ) or
+        ( rg_dc_change_2.rc != 1 )

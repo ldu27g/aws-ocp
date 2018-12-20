@@ -1,0 +1,26 @@
+---
+
+- name: Login OpenShift
+  command: oc login https://ocp-master.acom.local:8443 -u {{ ocp_user }} -p {{ ocp_password }} --insecure-skip-tls-verify=true
+  changed_when: False
+
+- name: Create project for {{ project_name }}
+  include_tasks: create_project.yml
+
+- name: Deploy zookeeper
+  include_tasks: ocp_zoo_deploy.yml
+  when: ocp_zoo_present == "true"
+
+- name: Deploy kafka
+  include_tasks: ocp_kafka_deploy.yml
+  when: ocp_kafka_present == "true"
+
+- name: Undeploy kafka
+  include_tasks: ocp_kafka_undeploy.yml
+  when: ocp_kafka_present == "false"
+
+- name: Undeploy zookeeper
+  include_tasks: ocp_zoo_undeploy.yml
+  when: ocp_zoo_present == "false"
+
+...

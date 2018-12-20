@@ -1,0 +1,14 @@
+---
+
+# Prometheus get
+- name: prometheus pod list
+  shell: "oc get -n {{ openshift_prometheus_namespace }} po | grep prometheus-[0-100] | awk -F ' ' '{print $1}'"
+  register: prometheus_pod
+
+# Prometheus update
+- name: prometheus pod delete
+  shell: "oc delete -n {{ openshift_prometheus_namespace }} pod {{ item }}"
+  with_items: "{{ prometheus_pod.stdout_lines }}"
+
+
+

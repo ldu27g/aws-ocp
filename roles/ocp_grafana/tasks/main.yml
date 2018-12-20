@@ -1,0 +1,79 @@
+---
+
+# Grafana project data
+- name: Get Grafana sa token
+  shell: "oc sa -n {{ openshift_grafana_namespace }} get-token {{ openshift_grafana_serviceaccount_name }}"
+  register: grafana_token
+  changed_when: false
+
+- name: Get Grafana route
+  shell: "oc get route -n {{ openshift_grafana_namespace }} | grep grafana | awk -F' ' '{print $2}'"
+  register: grafana_route
+  changed_when: false
+
+
+# Grafana datasource set
+- name: Get Prometheus route
+  shell: "oc get route -n {{ openshift_grafana_prometheus_namespace }} | grep prometheus | awk -F' ' '{print $2}'"
+  register: promehteus_route
+  changed_when: false
+
+- name: Get Prometheus sa token
+  shell: "oc sa -n {{ openshift_grafana_prometheus_namespace }} get-token {{ openshift_grafana_prometheus_serviceaccount }}"
+  register: prometheus_token
+  changed_when: false
+
+
+# Prometheus datasource set
+- name: Data source payload set
+  set_fact:
+    payload_data: "{{ openshift_grafana_datasource_payload | to_json | regex_replace('grafana_name', ocp_grafana_datasource_name ) | regex_replace('prometheus_url', 'https://' + promehteus_route.stdout ) | regex_replace('satoken',  prometheus_token.stdout )}}"
+
+- name: Prometheus datasource set
+  uri:
+    url: "https://{{ grafana_route.stdout }}/api/datasources"
+    user: "{{ grafana_token.stdout }}"
+    force_basic_auth: true
+    method: POST
+    body: '{{ payload_data }}'
+    body_format: json
+    headers:
+      Content-Type: "Content-Type: application/json"
+    status_code:
+      - 200
+      - 409
+  register: add_ds
+
+- debug: msg="chenged false \"Datasource {{ ocp_grafana_datasource_name }} is exist.\""
+  when: add_ds.status == 409
+
+- debug: msg="chenged true \"New datasource {{ ocp_grafana_datasource_name }} create.\""
+  when: add_ds.status == 200
+  changed_when: true
+
+
+# Custom dashboard set
+- name: Grafana dashboard over write
+  uri:
+    url: "https://{{ grafana_route.stdout }}/api/dashboards/db"
+    method: POST
+    validate_certs: no
+    user: "{{ grafana_token.stdout }}"
+    force_basic_auth: true
+    status_code: 
+      - 200
+      - 412
+    headers:
+      Content-Type: "Content-Type: application/json"
+    return_content: yes
+    body_format: json
+    body: {
+             "dashboard": "{{ lookup( 'file',item ) | regex_replace('###TITLE###',item | regex_replace('.*/','') ) }}"
+             ,
+             "folderId": 0,
+             "overwrite": true
+           }
+  changed_when: true
+  with_fileglob:
+    - "{{ role_path + '/files/dashboards/*' }}"
+

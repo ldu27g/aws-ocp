@@ -1,0 +1,140 @@
+---
+
+vm:
+  hosts: localhost
+  vars:
+    ansible_connection: local
+    ansible_ssh_user: "acom"
+    ansible_become: "yes"
+    base_url: "https://10.248.152.190:9440/PrismGateway/services/rest/v2.0"
+    username: "admin"
+    password: "Lenovo/4u"
+    vars_nx_vm:
+      - name: 'ocp-lb01'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 1
+        memorymb: 2048
+        ipaddr: '10.248.152.218'
+        netmask: '255.255.255.0'
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+
+      - name: 'ocp-master01'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 2
+        memorymb: 4096
+        ipaddr: '10.248.152.221'
+        netmask: '255.255.255.0'
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        storage_container_name: 'CONTAINER00'
+        second_disk_byte: 21474836480
+        power: 'on'
+      - name: 'ocp-master02'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 2
+        memorymb: 4096
+        ipaddr: '10.248.152.222'
+        netmask: '255.255.255.0'
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        storage_container_name: 'CONTAINER00'
+        second_disk_byte: 21474836480
+        power: 'on'
+      - name: 'ocp-master03'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 2
+        memorymb: 4096
+        ipaddr: '10.248.152.223'
+        netmask: '255.255.255.0'
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        storage_container_name: 'CONTAINER00'
+        second_disk_byte: 21474836480
+        power: 'on'
+
+      - name: 'ocp-infra01'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.224'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+      - name: 'ocp-infra02'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.225'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+      - name: 'ocp-infra03'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.226'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+
+      - name: 'ocp-worker01'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.227'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+      - name: 'ocp-worker02'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.228'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'
+      - name: 'ocp-worker03'
+        vmid: '64c05b64-330c-400f-a4f7-869d569a9bdb'
+        vcpus: 1
+        cores: 4
+        memorymb: 8192
+        ipaddr: '10.248.152.229'
+        netmask: '255.255.255.0' 
+        network: '10.248.152.0'
+        gateway: '10.248.152.1'
+        second_disk_byte: 85899345920
+        third_disk_byte: 21474836480
+        storage_container_name: 'CONTAINER00'
+        power: 'on'

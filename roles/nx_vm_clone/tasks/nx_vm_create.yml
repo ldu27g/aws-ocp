@@ -1,0 +1,31 @@
+---
+
+- name: Init vms_list
+  set_fact:
+    vms_list: []
+
+- name: Get VMs
+  uri:
+    url: "{{ base_url }}/vms"
+    validate_certs: no
+    force_basic_auth: yes
+    method: GET
+    status_code: 200
+    user: "{{ username }}"
+    password: "{{ password }}"
+    body_format: json
+    return_content: yes
+  register: vms_state
+
+- name: VMs list create
+  set_fact:
+    vms_list: "{{ vms_list + [item.name]}}"
+  with_items: "{{ vms_state.json.entities }}"
+
+- name: List VMs
+  include_tasks: nx_vm_clone.yml
+  with_items: "{{ vars_nx_vm }}"
+  loop_control:
+    loop_var: argument
+  when: ( [argument.name] | difference(vms_list) )
+

@@ -1,0 +1,52 @@
+---
+
+- name: Set power_list
+  set_fact:
+    power_list: []
+
+- name: Check VMs Power State
+  uri:
+    url: "{{base_url}}/vms/"
+    validate_certs: no
+    force_basic_auth: yes
+    method: GET
+    status_code: 200
+    user: "{{ username }}"
+    password: "{{ password }}"
+    body_format: json
+    return_content: yes
+  register: vms_state
+
+- name: Set VMs list
+  set_fact:
+    power_list: "{{ power_list + [{'name': item.name ,'power': item.power_state, 'uuid': item.uuid}] }}"
+  with_items: "{{ vms_state.json.entities }}"
+
+- name: Chamge VMs Power State
+  uri:
+    url: "{{base_url}}/vms/{{item.1.uuid}}/set_power_state/"
+    validate_certs: no
+    force_basic_auth: yes
+    method: POST
+    user: "{{ username }}"
+    password: "{{ password }}"
+    status_code: 201
+    body_format: json
+    body:
+      transition: "{{ item.0.power | upper }}"
+    return_content: yes
+  with_nested:
+    - "{{ vars_nx_vm }}"
+    - "{{ power_list }}"
+  when: ( item.0.power is defined ) and
+        ( item.0.name == item.1.name ) and
+        ( item.0.power | upper != item.1.power | upper )
+  changed_when: true
+
+- name: Wait SSH Connection
+  local_action: wait_for host={{ item.ipaddr }} port=22 state=started delay=1 timeout=300
+  with_items:
+    - "{{ vars_nx_vm }}"
+  when: ( item.power | default('off') | upper == 'ON' )
+
+

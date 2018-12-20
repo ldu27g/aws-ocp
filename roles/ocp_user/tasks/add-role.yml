@@ -1,0 +1,16 @@
+---
+
+
+- name: Add local Role To User
+  include_tasks: add-local-role-to-user.yml
+  loop_control:
+     loop_var: argument
+  with_items: "{{ vars_ls_ocp_user }}"
+  when: ( item.state != "absent")
+
+- name: Add Cluster Role To User
+  include_tasks: add-cluster-role-to-user.yml
+  loop_control:
+     loop_var: argument
+  with_items: "{{ vars_ls_ocp_user }}"
+  when: ( item.state != "absent")

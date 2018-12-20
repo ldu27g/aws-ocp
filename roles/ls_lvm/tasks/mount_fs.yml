@@ -1,0 +1,18 @@
+---
+
+- name: fstab登録
+  mount:
+    name: "{{ item.mpoint }}"
+    src: "{{ item.devname }}"
+    fstype: "{{ item.fstype }}"
+    dump: "{{ item.dump | default(1) }}"
+    passno: "{{ item.passno | default(0) }}"
+    opts: "{{ item.opts | default('defaults') }}"
+    state: present
+  register: fs
+  with_items: "{{ vars_ls_mount }}"
+
+- name: OS先起動
+  include: os_reboot.yml
+  when: fs.changed
+

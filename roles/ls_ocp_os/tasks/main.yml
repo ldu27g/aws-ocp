@@ -1,0 +1,109 @@
+---
+
+- name: set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: delete repository
+  raw: rm -rf /etc/yum.repos.d/*
+
+- name: add repository
+  copy:
+    src: Acom.repo
+    dest: /etc/yum.repos.d/acom.repo
+
+- name: yum clean all
+  raw: yum clean all
+
+- name: utils install
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ vars_ls_ocp_os_rpms }}"
+  when: ( vars_ls_ocp_os_rpms is defined )
+
+- name: enable NetworkManager
+  systemd:
+    name: NetworkManager
+    state: started
+    enabled: yes
+
+- name: Get NetworkManager DNS Settings
+  raw: nmcli c show eth0 | grep ipv4.dns{{':'}} | awk '{print $2}'
+  register: networkmanager
+  changed_when: False
+
+- name: set fact
+  set_fact:
+    compare_nameserver: "{{ vars_ls_ocp_os_nameserver | join(',') }}"
+
+- name: set fact
+  set_fact:
+    nameserver: "{{ vars_ls_ocp_os_nameserver | join(' ') }}"
+
+- name: modify NetworkManager DNS Settings
+  raw: nmcli c mod eth0 ipv4.dns "{{ nameserver }}"
+  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
+
+- name: restart NetworkManager
+  systemd:
+    name: NetworkManager
+    state: restarted
+  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
+
+- name: modify docker file
+  lineinfile:
+    path: /etc/sysconfig/docker
+    regexp: "OPTIONS="
+    line: "OPTIONS='{{ vars_ls_ocp_os_dockerops }}'"
+  register: dockerconfig
+
+- name: enable docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  register: dockerstart
+
+- name: enable docker
+  systemd:
+    name: docker
+    state: restarted
+  when: ( not dockerstart.changed ) and
+        ( dockerconfig.changed )
+
+- name: copy chrony.conf
+  copy:
+    src: chrony.conf
+    dest: /etc/chrony.conf
+  register: copychrony
+
+- name: restart chronyd
+  systemd:
+    name: chronyd
+    state: restarted
+  when: ( copychrony.changed )
+
+- name: modify journald.conf - SystemMaxUse
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^.*SystemMaxUse"
+    line: " SystemMaxUse={{ vars_ls_ocp_os_journal_size }}"
+  when: ( vars_ls_ocp_os_journal_size is defined )
+  register: journald_change_1
+
+- name: modify journald.conf - SystemMaxFileSize
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^.*SystemMaxFileSize"
+    line: "#SystemMaxFileSize="
+  when: ( vars_ls_ocp_os_journal_size is defined )
+  register: journald_change_2
+
+- name: restart journald
+  systemd:
+    name: systemd-journald
+    state: restarted
+  when: ( journald_change_1.changed ) or
+        ( journald_change_2.changed )
+

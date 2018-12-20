@@ -1,0 +1,32 @@
+---
+
+- name: tmp dir create
+  tempfile:
+    state: directory
+  register: tmp_dir
+  changed_when: false
+
+# prometheus configmap update
+- block:
+    - name: configmap text file cp
+      copy:
+        dest: "{{ tmp_dir.path }}/"
+        src: "{{ role_path }}/files/prometheus/./"
+
+    - name: old configmap prometheus delete
+      shell: "oc get -n {{ openshift_prometheus_namespace }} configmap prometheus | cat"
+      register: prometheus_state
+      changed_when: false
+
+    - name: old configmap prometheus delete
+      shell: "oc delete -n {{ openshift_prometheus_namespace }} configmap prometheus"
+      when: ( prometheus_state.stdout != "" )
+   
+    - name: new configmap prometheus update
+      shell: "oc create -n {{ openshift_prometheus_namespace }} configmap prometheus
+            --from-file={{ tmp_dir.path }}/./"
+  always:
+    - name: tmp dir delete
+      file: state=absent path="{{ tmp_dir.path }}"
+      changed_when: false
+

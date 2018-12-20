@@ -1,0 +1,2 @@
+{"spec":{"template":{"spec":{"nodeSelector":{"docker-registry":"present"}}}}}
+

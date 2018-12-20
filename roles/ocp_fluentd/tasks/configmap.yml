@@ -1,0 +1,67 @@
+---
+
+- name: tmp dir create
+  tempfile:
+    state: directory
+  register: tmp_dir
+  changed_when: false
+
+
+# logging-fluentd configmap update
+- block:
+    - name: configmap text file cp
+      copy:
+        dest: "{{ tmp_dir.path }}/"
+        src: "{{ role_path }}/files/logging-fluentd/./"
+      changed_when: false
+
+    - name:  Prometheus alert port setting
+      replace:
+        regexp: "###PORT###"
+        replace: "{{ ocp_fluentd_prometheus_port }}"
+        path: "{{ tmp_dir.path }}/{{ item |regex_replace('.*/','')}}"
+      changed_when: false
+      with_fileglob:
+        - "{{ role_path }}/files/logging-fluentd/*"
+
+    - name: Prometheus alert porotocol setting
+      replace:
+        regexp: "###PROTOCOL###"
+        replace: "{{ ocp_fluentd_prometheus_protocol }}"
+        path: "{{ tmp_dir.path }}/{{ item |regex_replace('.*/','')}}"
+      changed_when: false
+      with_fileglob:
+        - "{{ role_path }}/files/logging-fluentd/*"
+
+    - name: old configmap logging-fluentd check
+      shell: "oc get -n {{ openshift_logging_namespace }} configmap logging-fluentd | cat"
+      register: fluentd_state
+      changed_when: false
+
+    - name: old configmap logging-fluentd delete
+      shell: "oc delete -n {{ openshift_logging_namespace }} configmap logging-fluentd"
+      when: ( fluentd_state.stdout != "" )
+    
+    - name: new configmap logging-fluentd update
+      shell: "oc create -n {{ openshift_logging_namespace }} configmap logging-fluentd
+              --from-file={{ tmp_dir.path }}/."
+  rescue:
+    - name: tmp dir delete
+      file: state=absent path="{{ tmp_dir.path }}"
+      changed_when: false
+
+
+- name: export daemonset
+  shell: "oc export ds -n {{ openshift_logging_namespace }} logging-fluentd >> {{ tmp_dir.path }}/ds.yml"
+  changed_when: false
+
+- name: delete daemonset logging-fluentd
+  shell: "oc delete ds -n {{ openshift_logging_namespace }} logging-fluentd"
+
+- name: create daemonset logging-fluentd
+  shell: "oc create -n {{ openshift_logging_namespace }} -f {{ tmp_dir.path }}/ds.yml"
+
+- name: tmp dir delete
+  file: state=absent path="{{ tmp_dir.path }}"
+  changed_when: false
+

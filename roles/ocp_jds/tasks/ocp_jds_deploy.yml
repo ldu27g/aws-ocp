@@ -1,0 +1,65 @@
+---
+
+- name: Create directory for jds config dir
+  file:
+    path: "{{ jds_conf_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+  with_items:
+    - binary
+
+- name: Copy binary file directory to remote host
+  copy:
+    src: "files/"
+    dest: "{{ jds_conf_dir }}/binary/"
+    owner: root
+    group: root
+    mode: 0770
+
+
+- name: Create jds imagestream
+  command: oc import-image {{ jds_input_is_name }}:{{ jds_input_is_version }} --from {{ jds_image_import_repo }} --insecure=true --confirm -n {{ project_name }}
+
+- name: Add latest tag to import image
+  command: oc tag {{ jds_input_is_name }}:{{ jds_input_is_version }} {{ jds_input_is_name }}:latest -n {{ project_name }}
+
+- name: Check build for jds
+  command: oc get bc {{ jds_build_name }} -n {{ project_name }} 
+  register: jds_bc
+  ignore_errors: True
+  changed_when: False
+
+- name: Create new build for jds
+  command: oc new-build --image-stream={{ jds_input_is_name }}:{{ jds_input_is_version }} --binary=true --name={{ jds_build_name }} -n {{ project_name }}
+  when: jds_bc.rc != 0
+
+- name: Start build for jds
+  command: oc start-build {{ jds_build_name }} --from-dir={{ jds_conf_dir }}/binary/ -n {{ project_name }}
+
+- name: Check deploymentconfig jds
+  command: oc get dc {{ jds_build_name }} -n {{ project_name }}
+  register: jds_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Sleep for build complete
+  pause: seconds=60
+  when: jds_dc.rc != 0
+
+- name: Deploy jds
+  command: oc new-app {{ jds_build_name }} -n {{ project_name }}
+  when: jds_dc.rc != 0
+
+- name: Check route for jds
+  command: oc get route {{ jds_build_name }} -n {{ project_name }}
+  register: jds_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Create service expose jds
+  command: oc expose svc {{ jds_build_name }} -n {{ project_name }}
+  when: jds_route.rc != 0
+
+...

@@ -1,0 +1,10 @@
+---
+
+- name: Fluentd configmap setting
+  include_tasks: configmap.yml
+
+
+- name:  Fluentd service setting
+  include_tasks: service.yml
+
+

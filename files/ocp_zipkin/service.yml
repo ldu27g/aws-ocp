@@ -1,0 +1,21 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /prometheus
+    prometheus.io/port: "9411"
+  labels:
+    expose: "true"
+    component: zipkin
+  name: zipkin
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 9411
+  selector:
+    component: zipkin
+  type: LoadBalancer
+...

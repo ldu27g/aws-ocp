@@ -1,0 +1,35 @@
+---
+
+- name: Check Service Account
+  shell: oc get sa ipfailover -n {{ vars_ocp_ipf_project }}
+  changed_when: false
+  ignore_errors: true
+  register: rg_check_sa
+
+- name: Create Service Account
+  shell: oc create sa ipfailover -n {{ vars_ocp_ipf_project }}
+  when: rg_check_sa.rc != 0
+  register: rg_create_sa
+
+- name: Add SCC to Service Account
+  shell: oc adm policy add-scc-to-user privileged -z ipfailover -n {{ vars_ocp_ipf_project }}
+  when: rg_create_sa.changed
+
+- name: Check ipfailover dc
+  shell: oc get dc ipf-router -n {{ vars_ocp_ipf_project }}
+  changed_when: false
+  ignore_errors: true
+  register: rg_ipf_dc
+
+- name: Create ipfailover pod
+  shell:  oc adm ipfailover ipf-router \
+           --replicas="{{ vars_ocp_ipf_replicas }}" \
+           --watch-port="{{ vars_ocp_ipf_port }}" \
+           --virtual-ips="{{ vars_ocp_ipf_vips }}" \
+           --images="{{ vars_ocp_ipf_image }}" \
+           {{ ( vars_ocp_ipf_nodeselector | default('') != '' ) | ternary( '--selector=' +  '"' + vars_ocp_ipf_nodeselector | default('') + '"' ,None) }} \
+           --create \
+           -n {{ vars_ocp_ipf_project }}
+  ignore_errors: true
+  when: rg_ipf_dc.rc != 0
+

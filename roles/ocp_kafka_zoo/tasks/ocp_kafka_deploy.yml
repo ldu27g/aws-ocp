@@ -1,0 +1,115 @@
+---
+
+- name: Create directory for kafka config dir
+  file:
+    path: "{{ kafka_conf_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+  with_items:
+    - configmap
+    - deploymentconfig
+    - service
+
+- name: Copy kafka configmap file to remote host
+  copy:
+    src: "files/kafka-configmap.yml"
+    dest: "{{ kafka_conf_dir }}/configmap/configmap.yml"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Create the kafka service file by ansible template
+  template:
+    src: "{{ role_path }}/templates/kafka-service.j2"
+    dest: "{{ kafka_conf_dir }}/service/kafka{{ item }}.yml"
+    owner: root
+    group: root
+    mode: 0770
+  with_sequence: start=1 end="{{ kafka_replica_size }}"
+
+- name: Create the kafka deploymentconfig file by ansible template
+  template:
+    src: "{{ role_path }}/templates/kafka-deploymentconfig.j2"
+    dest: "{{ kafka_conf_dir }}/deploymentconfig/kafka{{ item }}.yml"
+    owner: root
+    group: root
+    mode: 0770
+  with_sequence: start=1 end="{{ kafka_replica_size }}"
+
+- name: Check already exist kafka node label on infra node
+  shell: oc get nodes -l kafka-node={{ item }} | grep ocp-infra0{{ item }}.acom.local
+  register: kafka_label
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Kafka label to node
+  command: oc label node ocp-infra0{{ item.item }}.acom.local kafka-node={{ item.item }}
+  when: item.rc != 0
+  with_items: "{{ kafka_label.results }}"
+
+- name: Check already exist kafka ConfigMap
+  command: oc get cm/kafka-cfg -n {{ project_name }}
+  register: kafka_cm
+  ignore_errors: True
+  changed_when: False
+
+- name: Create kafka ConfigMap
+  command: oc create -f {{ kafka_conf_dir }}/configmap -n {{ project_name }}
+  when: kafka_cm.rc != 0
+
+- name: Check already exist kafka ServiceAccount
+  command: oc get sa/aggregated-kafka -n {{ project_name }}
+  register: kafka_sa
+  ignore_errors: True
+  changed_when: False
+
+- name: Create kafka ServiceAccount
+  command: oc create sa aggregated-kafka -n {{ project_name }}
+  when: kafka_sa.rc != 0
+
+- name: Check scc role for kafka
+  shell: oc describe scc/privileged | grep system:serviceaccount:{{ project_name }}:aggregated-kafka
+  register: kafka_scc_role
+  ignore_errors: True
+  changed_when: False
+
+- name: Add privileged role to kafka user 
+  command: oc adm policy add-scc-to-user privileged -z aggregated-kafka -n {{ project_name }}
+  when: kafka_scc_role.rc != 0
+  
+- name: Check already exist kafka Service
+  command: oc get svc/kafka{{ item }} -n {{ project_name }}
+  register: kafka_svc
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Create kafka Service
+  command: oc create -f {{ kafka_conf_dir }}/service/kafka{{ item.item }}.yml -n {{ project_name }}
+  when: item.rc != 0
+  with_items: "{{ kafka_svc.results }}"
+
+- name: Check already exist kafka DeploymentConfig
+  command: oc get dc/kafka-{{ item }} -n {{ project_name }}
+  register: kafka_dc
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Create kafka DeploymentConfig
+  command: oc create -f {{ kafka_conf_dir }}/deploymentconfig/kafka{{ item.item }}.yml -n {{ project_name }}
+  when: item.rc != 0
+  with_items: "{{ kafka_dc.results }}"
+
+- name: Rollout kafka container
+  command: oc rollout latest kafka-{{ item }} -n {{ project_name }}
+  with_sequence: start=1 end={{ kafka_replica_size }}
+
+- name: Delete directory for kafka config dir
+  file:
+    path: "{{ kafka_conf_dir }}"
+    state: absent
+...

@@ -1,0 +1,38 @@
+{
+    "spec": {
+        "template": {
+            "spec": {
+                "volumes": [
+                    {
+                        "name": "proxy-tls",
+                        "secret": {
+                            "secretName": "prometheus-tls",
+                            "defaultMode": 420
+                        }
+                    },
+                    {
+                        "name": "elasticsearch",
+                        "secret": {
+                            "secretName": "logging-elasticsearch",
+                            "defaultMode": 420
+                        }
+                    },
+                    {
+                        "configMap": {
+                            "name": "logging-elasticsearch",
+                            "defaultMode": 420
+                        },
+                        "name": "elasticsearch-config"
+                    },
+                    {
+                        "name": "elasticsearch-storage",
+                        "hostPath": {
+                            "path": "/data/elastic-vol",
+                            "type": ""
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

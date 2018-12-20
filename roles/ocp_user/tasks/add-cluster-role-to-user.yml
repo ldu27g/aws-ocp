@@ -1,0 +1,21 @@
+---
+
+
+- name: Get Cluster Role To User
+  shell: oc get clusterrolebinding.rbac -o wide |  \
+         grep -w "  {{ argument.username }}" | awk '{print $3}' | sort | uniq
+  register: getclusterrole
+  changed_when: False
+  when: ( argument.cluster_role is defined ) and 
+        ( argument.cluster_role.0 is defined ) and 
+        ( argument.state | default("present") != "absent" )
+
+- name: Add Cluster Role To User
+  shell: oc adm policy add-cluster-role-to-user \
+         {{ item.role }} \
+         {{ argument.username }}
+  with_items: "{{ argument.cluster_role }}"
+  when: ( argument.cluster_role is defined ) and 
+        ( argument.cluster_role.0 is defined ) and
+        ( argument.state | default("present") != "absent" ) and
+        ( item.role not in getclusterrole.stdout )

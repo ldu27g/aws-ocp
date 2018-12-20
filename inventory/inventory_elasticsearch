@@ -1,0 +1,22 @@
+[OSE:children]
+masters
+elasticsearch-nodes
+
+[OSE:vars]
+ansible_ssh_user=acom
+ansible_become=yes
+
+vars_ocp_elasticsearch_volume=[{"hostpath":"/data/elastic-vol", "mode":"0777", "owner":"root", "group":"root"}]
+vars_ocp_elasticsearch_nodeselector="logging-infra=elasticsearch"
+vars_ocp_elasticsearch_project="logging"
+vars_ocp_elasticsearch_sa_name="aggregated-logging-elasticsearch"
+vars_ocp_elasticsearch_sa_scc="privileged"
+
+[masters]
+ocp-master01.acom.local
+
+[elasticsearch-nodes]
+ocp-infra01.acom.local
+ocp-infra02.acom.local
+ocp-infra03.acom.local
+

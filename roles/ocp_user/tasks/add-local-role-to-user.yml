@@ -1,0 +1,26 @@
+---
+
+
+- name: Get Local Role To User
+  shell: oc get rolebindings -n "{{ item.project }}" |  \
+         grep -w "/{{ item.role }}" |  \
+         grep -w "  {{ argument.username }}" | tail -n 1
+  with_items: "{{ argument.local_role }}"
+  register: getlocalrole
+  changed_when: False
+  when: ( argument.local_role is defined ) and 
+        ( argument.state | default("present") != "absent" )
+
+- name: Add Local Role To User
+  shell: oc adm policy add-role-to-user \
+         {{ item.0.role }} \
+         {{ argument.username }} \
+         -n {{ item.0.project }}
+  with_together:
+    - "{{ argument.local_role }}"
+    - "{{ getlocalrole.results }}"
+  when: ( argument.local_role is defined ) and 
+        ( item.1.stdout is defined ) and
+        ( item.1.stdout == "" ) and 
+        ( argument.state | default("present") != "absent" )
+

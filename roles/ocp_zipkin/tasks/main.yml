@@ -1,0 +1,21 @@
+---
+
+- name: Login OpenShift
+  command: oc login https://ocp-master.acom.local:8443 -u {{ ocp_user }} -p {{ ocp_password }} --insecure-skip-tls-verify=true
+  changed_when: False
+
+- name: Create project
+  include_tasks: create_project.yml
+
+- name: Join logging pod network
+  include_tasks: join_logging_network.yml
+
+- name: Deploy zipkin
+  include_tasks: ocp_zipkin_deploy.yml
+  when: ocp_zipkin_present == "true"
+
+- name: Undeploy zipkin
+  include_tasks: ocp_zipkin_undeploy.yml
+  when: ocp_zipkin_present == "false"
+
+...

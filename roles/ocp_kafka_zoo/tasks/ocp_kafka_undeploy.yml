@@ -1,0 +1,68 @@
+---
+
+- name: Check already exist kafka node label on infra node
+  shell: oc get nodes -l kafka-node={{ item }} | grep ocp-infra0{{ item }}.acom.local
+  register: kafka_label
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Delete kafka Label
+  command: oc label node ocp-infra0{{ item.item }}.acom.local kafka-node-
+  when: item.rc == 0
+  with_items: "{{ kafka_label.results }}"
+
+- name: Check already exist kafka ConfigMap
+  command: oc get cm/kafka-cfg -n {{ project_name }}
+  register: kafka_cm
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete kafka ConfigMap
+  command: oc delete cm/kafka-cfg -n {{ project_name }}
+  when: kafka_cm.rc == 0
+
+- name: Check already exist kafka ServiceAccount
+  command: oc get sa/aggregated-kafka -n {{ project_name }}
+  register: kafka_sa
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete kafka ServiceAccount
+  command: oc delete sa aggregated-kafka -n {{ project_name }}
+  when: kafka_sa.rc == 0
+
+- name: Check scc role for kafka
+  shell: oc describe scc/privileged | grep system:serviceaccount:{{ project_name }}:aggregated-kafka
+  register: kafka_scc_role
+  ignore_errors: True
+  changed_when: False
+
+- name: Delete privileged role to kafka user 
+  command: oc adm policy remove-scc-from-user privileged -z aggregated-kafka -n {{ project_name }}
+  when: kafka_scc_role.rc == 0
+  
+- name: Check already exist kafka Service
+  command: oc get svc/kafka{{ item }} -n {{ project_name }}
+  register: kafka_svc
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Delete kafka Service
+  command: oc delete svc/kafka{{ item.item }} -n {{ project_name }}
+  when: item.rc == 0
+  with_items: "{{ kafka_svc.results }}"
+
+- name: Check already exist kafka DeploymentConfig
+  command: oc get dc/kafka-{{ item }} -n {{ project_name }}
+  register: kafka_dc
+  ignore_errors: True
+  with_sequence: start=1 end={{ kafka_replica_size }}
+  changed_when: False
+
+- name: Delete kafka DeploymentConfig
+  command: oc delete dc/kafka-{{ item.item }} -n {{ project_name }}
+  when: item.rc == 0
+  with_items: "{{ kafka_dc.results }}"
+...

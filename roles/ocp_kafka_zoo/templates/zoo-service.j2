@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    zoo: zoo{{ item }}
+  name: zoo{{ item }}
+spec:
+  ports:
+    - name: zoo-client
+      port: 2181
+      protocol: TCP
+      targetPort: 2181
+    - name: zoo-connect
+      port: 2888
+      protocol: TCP
+      targetPort: 2888
+    - name: zoo-leader
+      port: 3888
+      protocol: TCP
+      targetPort: 3888
+  selector:
+    component: zookeeper
+    zoo-node: '{{ item }}'
+  sessionAffinity: None
+  type: ClusterIP
+...

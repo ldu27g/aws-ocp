@@ -1,0 +1,75 @@
+{
+    "apiVersion": "extensions/v1beta1",
+    "kind": "DaemonSet",
+    "spec": {
+        "template": {
+            "spec": {
+                "containers": [
+                    {
+                        "name": "node-exporter",
+                        "command": [
+                            "sh",
+                            "-c",
+                            "/bin/node_exporter --collector.systemd"
+                        ],
+                        "securityContext": {
+                            "privileged": true
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/host/proc",
+                                "name": "proc",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/host/sys",
+                                "name": "sys",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/host/root",
+                                "name": "root",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/var/run/dbus/system_bus_socket",
+                                "name": "dbus",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "volumes": [
+                    {
+                        "hostPath": {
+                            "path": "/proc",
+                            "type": ""
+                        },
+                        "name": "proc"
+                    },
+                    {
+                        "hostPath": {
+                            "path": "/sys",
+                            "type": ""
+                        },
+                        "name": "sys"
+                    },
+                    {
+                        "hostPath": {
+                            "path": "/",
+                            "type": ""
+                        },
+                        "name": "root"
+                    },
+                    {
+                        "hostPath": {
+                            "path": "/var/run/dbus/system_bus_socket",
+                            "type": ""
+                        },
+                        "name": "dbus"
+                    }
+                ]
+            }
+        }
+    }
+}

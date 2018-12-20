@@ -1,0 +1,53 @@
+---
+
+# fluentd service check
+- name: service logging-fluentd check
+  shell: "oc get service -n {{ openshift_logging_namespace }} | grep logging-fluentd | cat"
+  register: service_fluentd
+  changed_when: false
+
+
+# fluentd service create
+- when: ( service_fluentd.stdout == "" )
+  block:
+    - name: tmp dir create
+      tempfile:
+        state: directory
+      register: tmp_dir
+      changed_when: false
+      
+    - name: service text file cp
+      copy:
+        dest: "{{ tmp_dir.path }}/create_service_fluentd.yml"
+        src: "{{ role_path }}/files/svc_fluentd/create_service_fluentd.yml"
+
+    - name: service logging-fluentd create
+      shell: "oc create -n {{ openshift_logging_namespace }} -f {{ tmp_dir.path }}/create_service_fluentd.yml"
+      when: ( service_fluentd.stdout == "" )
+  always:
+    - name: tmp dir delete
+      file: state=absent path="{{ tmp_dir.path }}"
+      changed_when: false
+
+
+# fluentd service update
+- name: service logging-fluentd update
+  shell: "oc patch -n {{ openshift_logging_namespace }} service logging-fluentd
+          -p \'{{ lookup( 'file',role_path + '/files/patch/patch_service_logging-fluentd.json') | regex_replace('###PORT###',ocp_fluentd_prometheus_port) | regex_replace('###PROTOCOL###',ocp_fluentd_prometheus_protocol | upper) }}\'"
+  ignore_errors: true
+
+
+# pod-network join projects prometheus & fluentd
+- name: pod-network check
+  shell: "oc get netnamespace | grep {{ item }} | cat | awk -F ' ' '{print $2}'"
+  register: netid
+  changed_when: false
+  with_items:
+    - "{{ openshift_prometheus_namespace }}"
+    - "{{ openshift_logging_namespace }}"
+
+- name: join projects prometheus & fluentd
+  shell: "oc adm pod-network join-projects --to={{ openshift_prometheus_namespace }} {{ openshift_logging_namespace }}"
+  when: ( netid.results.0.stdout != netid.results.1.stdout )
+
+

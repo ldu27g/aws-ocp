@@ -1,0 +1,48 @@
+---
+
+- name: LVM2インストール
+  yum:
+    name: lvm2
+    state: present
+  register: lvm_inst
+
+- name: OS先起動
+  include: os_reboot.yml
+  when: ( lvm_inst is defined ) and
+        ( lvm_inst.changed )
+
+- name: PV/VG作成
+  lvg:
+    vg: "{{ item.vgname }}"
+    pvs: "{{ item.pvname }}"
+    pesize: "{{ item.pesize | default(4) }}"
+  with_items: "{{ vars_ls_vg }}"
+
+- name: LV作成
+  lvol:
+    vg: "{{ item.vgname }}"
+    lv: "{{ item.lvname }}"
+    size: "{{ item.lvsize }}"
+    shrink: no
+  register: lv
+  with_items: "{{ vars_ls_lv }}"
+
+- name: LVフォーマット
+  filesystem:
+    dev: "/dev/mapper/{{ item.vgname }}-{{ item.lvname }}"
+    fstype: "{{ item.fstype }}"
+  with_items: "{{ vars_ls_lv }}" 
+
+- name: ファイルシステム拡張_ext3
+  raw: resize2fs /dev/mapper/{{ item.vgname }}-{{ item.lvname }}
+  when: ( lv is defined ) and
+        ( lv.changed  ) and
+        ( "ext3" == item.fstype )
+  with_items: "{{ vars_ls_lv }}" 
+
+- name: ファイルシステム拡張_ext4
+  raw: resize2fs /dev/mapper/{{ item.vgname }}-{{ item.lvname }}
+  when: ( lv is defined ) and
+        ( lv.changed  ) and
+        ( "ext4" == item.fstype )
+  with_items: "{{ vars_ls_lv }}" 

@@ -1,0 +1,68 @@
+---
+
+
+OSE:
+  children:
+    masters:
+    nodes:
+    docker-registry-node:
+    elasticsearch-nodes:
+  vars:
+    ansible_ssh_user: "acom"
+    ansible_become: "yes"
+    vars_ocp_docker_registry_volume:
+      - hostpath: "/data/docker-vol"
+        mode: "0777"
+        owner: "root"
+        group: "root"
+    vars_ocp_docker_registry_node: "ocp-infra01.acom.local"
+    vars_ocp_docker_registry_nodeselector: "docker-registry=present"
+    vars_ocp_docker_registry_project: "default"
+    vars_ocp_docker_registry_sa_name: "registry"
+    vars_ocp_docker_registry_sa_scc: "privileged"
+    vars_ocp_elasticsearch_volume:
+      - hostpath: "/data/elastic-vol"
+        mode: "0777"
+        owner: "root"
+        group: "root"
+    vars_ocp_elasticsearch_nodeselector: "logging-infra=elasticsearch"
+    vars_ocp_elasticsearch_project: "logging"
+    vars_ocp_elasticsearch_sa_name: "aggregated-logging-elasticsearch"
+    vars_ocp_elasticsearch_sa_scc: "privileged"
+    vars_ocp_ipf_present: "true"
+    vars_ocp_ipf_project: "default"
+    vars_ocp_ipf_replicas: "3"
+    vars_ocp_ipf_nodeselector: "region=infra"
+    vars_ocp_ipf_port: "80"
+    vars_ocp_ipf_vips: "10.248.152.219"
+    vars_ocp_ipf_image: "10.248.152.200:5000/openshift3/ose-keepalived-ipfailover:v3.9.30"
+    openshift_grafana_namespace: "openshift-grafana"
+    openshift_grafana_serviceaccount_name: "grafana"
+    openshift_grafana_prometheus_namespace: "openshift-metrics"
+    openshift_grafana_prometheus_serviceaccount: "prometheus"
+    ocp_grafana_datasource_name: "ocp-prometheus"
+    ocp_grafana_dashboard_name: "acom"
+    ocp_prometheus_alert_repeat: "8h"
+    ocp_fluentd_prometheus_port: "8085"
+    ocp_fluentd_prometheus_protocol: "tcp"
+    ocp_fluentd_proemtheus_service: "logging-fluentd"
+    openshift_prometheus_namespace: "openshift-metrics"
+    openshift_logging_namespace: "logging"
+
+masters:
+  hosts:
+    ocp-master0[1:3].acom.local:
+
+nodes:
+  hosts:
+    ocp-master0[1:3].acom.local:
+    ocp-worker0[1:3].acom.local:
+    ocp-infra0[1:3].acom.local:
+
+docker-registry-node:
+  hosts:
+    ocp-infra01.acom.local:
+
+elasticsearch-nodes:
+  hosts:
+    ocp-infra0[1:3].acom.local:

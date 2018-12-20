@@ -1,0 +1,22 @@
+---
+
+vm:
+  hosts: localhost
+  vars:
+    ansible_connection: local
+    ansible_ssh_user: "acom"
+    ansible_become: "yes"
+    base_url: "https://10.248.152.190:9440/PrismGateway/services/rest/v2.0"
+    username: "admin"
+    password: "Lenovo/4u"
+    vars_nx_vm_delete:  
+      - "ocp-master01"
+      - "ocp-master02"
+      - "ocp-master03"
+      - "ocp-infra01"
+      - "ocp-infra02"
+      - "ocp-infra03"
+      - "ocp-worker01"
+      - "ocp-worker02"
+      - "ocp-worker03"
+      - "ocp-lb01"

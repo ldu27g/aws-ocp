@@ -1,0 +1,203 @@
+groups:
+- name: node_cpu
+  rules:
+  - alert: node_cpu_check
+    expr: ((1 - avg by(instance) (rate(node_cpu{mode="idle"}[5m]))) * 100 ) > 80
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ labels.instance }}:CPU usage rate over 80%"
+      description: "{{ labels.instance }}:CPU usage rate over 80% for more than 5 minutes."
+  - alert: node_cpu_check_system
+    expr: ((avg by(instance) (rate(node_cpu{mode="system"}[5m]))) * 100 ) > 80
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ labels.instance }}:CPU system usage rate over 80%"
+      description: "{{ labels.instance }}:CPU system usage rate over 80% for more than 5 minutes."
+  - alert: node_cpu_check_user
+    expr: ((avg by(instance) (rate(node_cpu{mode="user"}[5m]))) * 100 ) > 80
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ labels.instance }}:CPU user usage rate over 80%"
+      description: "{{ labels.instance }}:CPU user usage rate over 80% for more than 5 minutes."
+      
+      
+- name: node_memory
+  rules:
+  - alert: node_mem_check
+    expr: (100 - (( node_memory_MemAvailable / node_memory_MemTotal ) * 100 )) > 80
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ $labels.instance }}:Memory usage rate over 80%"
+      description: "{{ $labels.instance }}:Memory usage rate over 80% for more than 5 minutes."
+      
+
+- name: node_disk
+  rules:
+  - alert: node_filesystem_check
+    expr: (100 - ((node_filesystem_free{mountpoint=~"/host/.*"} / node_filesystem_size{mountpoint=~"/host/.*"}) * 100 )) >80
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ $labels.instance }}:mountpoint {{ $labels.mountpoint}}:Disk usage rate over 80%"
+      description: "{{ $labels.instance }}:mountpoint {{ $labels.mountpoint}}:Disk usage rate over 80% for more than 5 minutes"
+
+
+- name: node_process
+  rules:
+  - alert: node_systemd_process_check
+    expr: node_systemd_unit_state{state="active",name=~"NetworkManager.service|sshd.service|atomic-openshift.*|dnsmasq.service|etcd.service|openvswitch.service|docker.service"} == 0
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "{{ labels.instance }}:{{ $labels.name }} is not active"
+      description: "{{ labels.instance }}:{{ $labels.name }} is not active"
+      
+
+- name: pod_count
+  rules:
+  - alert: pod_count_default_ipf-router-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"ipf-router-.*",namespace="default"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"ipf-router-.*",namespace="default"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "default namespace ipf-router-.* pod under 3"
+      description:  "default namespace ipf-router-.* pod under 3"
+  - alert: pod_count_default_docker-registry-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"docker-registry-.*",namespace="default"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"docker-registry-.*",namespace="default"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "default namespace docker-registry-.* pod under 1"
+      description:  "default namespace docker-registry-.* pod under 1"
+  - alert: pod_count_default_registry-console-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"registry-console-.*",namespace="default"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"registry-console-.*",namespace="default"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "default namespace registry-console-.* pod under 1"
+      description:  "default namespace registry-console-.* pod under 1"
+  - alert: pod_count_default_router-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"router-.*",namespace="default"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"router-.*",namespace="default"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "default namespace router-.* pod under 3"
+      description:  "default namespace router-.* pod under 3"
+  - alert: pod_count_kafka_kafka-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"kafka-.*",namespace="kafka"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"kafka-.*",namespace="kafka"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "kafka namespace kafka-.* pod under 3"
+      description:  "kafka namespace kafka-.* pod under 3"
+  - alert: pod_count_kafka_zookeeper-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"zookeeper-.*",namespace="kafka"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"zookeeper-.*",namespace="kafka"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "kafka namespace zookeeper-.* pod under 3"
+      description:  "kafka namespace zookeeper-.* pod under 3"
+  - alert: pod_count_kube-service-catalog_controller-manager-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"controller-manager-.*",namespace="kube-service-catalog"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"controller-manager-.*",namespace="kube-service-catalog"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "kube-service-catalog namespace controller-manager-.* pod under 3"
+      description:  "kube-service-catalog namespace controller-manager-.* pod under 3"
+  - alert: pod_count_kube-service-catalog_apiserver-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"apiserver-.*",namespace="kube-service-catalog"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"apiserver-.*",namespace="kube-service-catalog"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "kube-service-catalog namespace apiserver-.* pod under 3"
+      description:  "kube-service-catalog namespace apiserver-.* pod under 3"
+  - alert: pod_count_logging_logging-fluentd-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-fluentd-.*",namespace="logging"}) < 9 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-fluentd-.*",namespace="logging"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "logging namespace logging-fluentd-.* pod under 9"
+      description:  "logging namespace logging-fluentd-.* pod under 9"
+  - alert: pod_count_logging_logging-es-data-master-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-es-data-master-.*",namespace="logging"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-es-data-master-.*",namespace="logging"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "logging namespace logging-es-data-master-.* pod under 3"
+      description:  "logging namespace logging-es-data-master-.* pod under 3"
+  - alert: pod_count_logging_logging-curator-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-curator-.*",namespace="logging"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-curator-.*",namespace="logging"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "logging namespace logging-curator-.* pod under 1"
+      description:  "logging namespace logging-curator-.* pod under 1"
+  - alert: pod_count_logging_logging-kibana-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-kibana-.*",namespace="logging"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"logging-kibana-.*",namespace="logging"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "logging namespace logging-kibana-.* pod under 1"
+      description:  "logging namespace logging-kibana-.* pod under 1"
+  - alert: pod_count_openshift-grafana_grafana-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"grafana-.*",namespace="openshift-grafana"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"grafana-.*",namespace="openshift-grafana"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "openshift-grafana namespace grafana-.* pod under 1"
+      description:  "openshift-grafana namespace grafana-.* pod under 1"
+  - alert: pod_count_openshift-metrics_prometheus-[0-100]
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"prometheus-[0-100]",namespace="openshift-metrics"}) < 1 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"prometheus-[0-100]",namespace="openshift-metrics"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "openshift-metrics namespace prometheus-[0-100] pod under 1"
+      description:  "openshift-metrics namespace prometheus-[0-100] pod under 1"
+  - alert: pod_count_openshift-metrics_prometheus-node-exporter-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"prometheus-node-exporter-.*",namespace="openshift-metrics"}) < 9 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"prometheus-node-exporter-.*",namespace="openshift-metrics"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "openshift-metrics namespace prometheus-node-exporter-.* pod under 9"
+      description:  "openshift-metrics namespace prometheus-node-exporter-.* pod under 9"
+  - alert: pod_count_openshift-template-service-broker_apiserver-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"apiserver-.*",namespace="openshift-template-service-broker"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"apiserver-.*",namespace="openshift-template-service-broker"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "openshift-template-service-broker namespace apiserver-.* pod under 3"
+      description:  "openshift-template-service-broker namespace apiserver-.* pod under 3"
+  - alert: pod_count_openshift-web-console_webconsole-.*
+    expr: count(container_cpu_load_average_10s{container_name="POD",pod_name=~"webconsole-.*",namespace="openshift-web-console"}) < 3 or absent(container_cpu_load_average_10s{container_name="POD",pod_name=~"webconsole-.*",namespace="openshift-web-console"})
+    for: 5m
+    labels:
+      serverity: critical
+    annotations:
+      summary: "openshift-web-console namespace webconsole-.* pod under 3"
+      description:  "openshift-web-console namespace webconsole-.* pod under 3"

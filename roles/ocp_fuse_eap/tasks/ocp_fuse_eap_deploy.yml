@@ -1,0 +1,64 @@
+---
+
+- name: Create directory for fuse on eap config dir
+  file:
+    path: "{{ fuse_eap_conf_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+  with_items:
+    - binary
+
+- name: Copy binary file to remote host
+  copy:
+    src: "files/{{ fuse_eap_binary_name }}"
+    dest: "{{ fuse_eap_conf_dir }}/binary/{{ fuse_eap_binary_name}}"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Create fuse on jboss eap imagestream
+  command: oc import-image {{ fuse_eap_input_is_name }}:{{ fuse_eap_input_is_version }} --from {{ fuse_eap_image_import_repo }} --insecure=true --confirm -n {{ project_name }}
+
+- name: Add latest tag to import image
+  command: oc tag {{ fuse_eap_input_is_name }}:{{ fuse_eap_input_is_version }} {{ fuse_eap_input_is_name }}:latest -n {{ project_name }}
+
+- name: Check build for fuse on eap
+  command: oc get bc {{ fuse_eap_build_name }} -n {{ project_name }} 
+  register: fuse_eap_bc
+  ignore_errors: True
+  changed_when: False
+
+- name: Create new build for fuse on jboss eap
+  command: oc new-build --image-stream={{ fuse_eap_input_is_name }}:{{ fuse_eap_input_is_version }} --binary=true --name={{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_bc.rc != 0
+
+- name: Start build for fuse on eap
+  command: oc start-build {{ fuse_eap_build_name }} --from-dir={{ fuse_eap_conf_dir }}/binary/ -n {{ project_name }}
+
+- name: Check deploymentconfig fuse on jboss eap
+  command: oc get dc {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Sleep for build complete
+  pause: seconds=60
+  when: fuse_eap_dc.rc != 0
+
+- name: Deploy fuse on eap
+  command: oc new-app {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_dc.rc != 0
+
+- name: Check route for fuse on jboss eap
+  command: oc get route {{ fuse_eap_build_name }} -n {{ project_name }}
+  register: fuse_eap_route
+  ignore_errors: True
+  changed_when: False
+
+- name: Create service expose fuse on jboss eap
+  command: oc expose svc {{ fuse_eap_build_name }} -n {{ project_name }}
+  when: fuse_eap_route.rc != 0
+
+...

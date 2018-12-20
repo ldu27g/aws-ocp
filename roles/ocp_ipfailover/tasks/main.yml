@@ -1,0 +1,10 @@
+---
+
+- name: Create ipfaiover
+  include_tasks: create_ipf.yml
+  when: ( vars_ocp_ipf_present == 'true' )
+
+- name: Delete ipfaiover
+  include_tasks: delete_ipf.yml
+  when: ( vars_ocp_ipf_present == 'false' )
+

@@ -1,0 +1,17 @@
+---
+
+- name: Create Elasticsearch Persistent Directory
+  hosts: elasticsearch-nodes
+  tasks:
+    - include_role:
+        name: ocp_elasticsearch
+        tasks_from: create_dir
+
+
+- name: Configre Elasticsearch Hostpath Volume
+  hosts: masters[0]
+  tasks:
+    - include_role:
+        name: ocp_elasticsearch
+        tasks_from: create_volume
+

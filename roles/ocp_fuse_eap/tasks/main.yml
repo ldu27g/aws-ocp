@@ -1,0 +1,17 @@
+---
+
+- name: Login OpenShift
+  command: oc login https://ocp-master.acom.local:8443 -u {{ ocp_user }} -p {{ ocp_password }} --insecure-skip-tls-verify=true
+
+- name: Create project
+  include_tasks: create_project.yml
+
+- name: Deploy fuse on jboss eap
+  include_tasks: ocp_fuse_eap_deploy.yml
+  when: ocp_fuse_eap_present == "true"
+
+- name: Undeploy fuse on jboss eap
+  include_tasks: ocp_fuse_eap_undeploy.yml
+  when: ocp_fuse_eap_present == "false"
+
+...

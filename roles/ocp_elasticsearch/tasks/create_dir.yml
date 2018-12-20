@@ -1,0 +1,9 @@
+---
+
+- name: Create Directory
+  file:
+    path: "{{ vars_ocp_elasticsearch_volume.0.hostpath }}"
+    mode: "{{ vars_ocp_elasticsearch_volume.0.mode }}"
+    owner: "{{ vars_ocp_elasticsearch_volume.0.owner }}"
+    group: "{{ vars_ocp_elasticsearch_volume.0.group }}"
+    state: directory

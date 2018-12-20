@@ -1,0 +1,32 @@
+---
+
+- name: tmp dir create
+  local_action:  tempfile state=directory
+  register: local_tmp_dir
+  changed_when: false
+
+# Prometheus alertmanager configmap setting
+- block: 
+    - name: configmap template file cp
+      become: true
+      local_action: template dest="{{ local_tmp_dir.path }}/alertmanager.yml" src="{{ role_path }}/files/alertmanager/alertmanager.yml"
+      changed_when: false
+
+    - name: configmap alertmanager update
+      shell: "oc patch -n {{ openshift_prometheus_namespace }} configmap alertmanager
+              -p \'
+              {
+                  \"apiVersion\": \"v1\",
+                  \"data\": {
+                      \"alertmanager.yml\": \"{{ lookup( 'file',local_tmp_dir.path + '/alertmanager.yml') | regex_replace('\\n','\\\\n') }}\"
+                  },
+                  \"kind\": \"ConfigMap\"
+              }
+              \'"
+      ignore_errors: true
+
+  always:
+    - name: local tmp dir delete
+      local_action: file state=absent path="{{ local_tmp_dir.path }}"
+      changed_when: false
+

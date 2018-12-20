@@ -1,0 +1,96 @@
+---
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    component: zookeeper
+    deployment: zookeeper-{{ item }}
+    openshift.io/scc: privileged
+    zoo-node: '{{ item }}'
+  name: zookeeper-{{ item }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    component: zookeeper
+    deployment: zookeeper-{{ item }}
+    zoo-node: '{{ item }}'
+  strategy:
+    activeDeadlineSeconds: 21600
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        component: zookeeper
+        deployment: zookeeper-{{ item }}
+        zoo-node: '{{ item }}'
+      name: zookeeper-{{ item }}
+    spec:
+      containers:
+        - command:
+            - sh
+            - '-c'
+            - >-
+              echo ${ZOO_NODE_ID} > ${ZK_HOME}/data/myid &&
+              ${ZK_HOME}/bin/zkServer.sh start-foreground
+          env:
+            - name: DC_NAME
+              value: zookeeper-{{ item }}
+            - name: ZK_HOME
+              value: /var/lib/zookeeper
+            - name: ZOO_NODE_ID
+              value: '{{ item }}'
+            - name: NODE_QUORUM
+              value: '2'
+          image: '10.248.152.200:5000/zookeeper:3.4.12'
+          imagePullPolicy: IfNotPresent
+          name: zookeeper-{{ item }}
+          ports:
+            - containerPort: 2181
+              name: zoo-client
+              protocol: TCP
+            - containerPort: 2888
+              name: zoo-connect
+              protocol: TCP
+            - containerPort: 3888
+              name: zoo-leader
+              protocol: TCP
+          resources: {}
+          securityContext:
+            privileged: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/zookeeper/conf/zoo.cfg
+              name: zoo-cfg
+              readOnly: true
+              subPath: zoo.cfg
+            - mountPath: /var/lib/zookeeper/data
+              name: zoo-data
+      dnsPolicy: ClusterFirst
+      hostname: zoo{{ item }}
+      nodeSelector:
+        zoo-node: '{{ item }}'
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsUser: 0
+      serviceAccount: aggregated-zookeeper
+      serviceAccountName: aggregated-zookeeper
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: zoo-cfg
+          name: zoo-cfg
+        - hostPath:
+            path: /var/zoo-data
+            type: ''
+          name: zoo-data
+  test: false
+  triggers: []
+...

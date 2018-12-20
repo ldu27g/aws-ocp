@@ -1,0 +1,24 @@
+---
+
+- name: Check Service Account
+  shell: oc get sa ipfailover -n {{ vars_ocp_ipf_project }}
+  changed_when: false
+  ignore_errors: true
+  register: rg_check_sa
+
+- name: Delete Service Account
+  shell: oc delete sa ipfailover -n {{ vars_ocp_ipf_project  }}
+  when: rg_check_sa.rc == 0
+  register: rg_create_sa
+
+- name: Check ipfailover dc
+  shell: oc get dc ipf-router -n {{ vars_ocp_ipf_project }}
+  changed_when: false
+  ignore_errors: true
+  register: rg_ipf_dc
+
+- mame: Delete ipfailover pod
+  shell:  oc delete dc ipf-router -n {{ vars_ocp_ipf_project }}
+  ignore_errors: true
+  when: rg_ipf_dc.rc == 0
+

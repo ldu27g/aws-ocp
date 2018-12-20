@@ -1,0 +1,167 @@
+---
+
+- name: Create directory for jdv config dir
+  file:
+    path: "{{ jdv_conf_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+  with_items:
+    - template
+    - secret
+
+- name: Create the jdv template file by ansible template
+  template:
+    src: "{{ role_path }}/templates/template.j2"
+    dest: "{{ jdv_conf_dir }}/template/template.yml"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Copy jdv datasource.env file to remote host
+  copy:
+    src: "files/datasource.env"
+    dest: "{{ jdv_conf_dir }}/secret/datasource.env"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Copy jdv .gitconfig file to remote host
+  copy:
+    src: "files/.gitconfig"
+    dest: "{{ jdv_conf_dir }}/secret/.gitconfig"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Copy jdv keystore.jks file to remote host
+  copy:
+    src: "files/keystore.jks"
+    dest: "{{ jdv_conf_dir }}/secret/keystore.jks"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Copy jdv jgroups.jceks file to remote host
+  copy:
+    src: "files/jgroups.jceks"
+    dest: "{{ jdv_conf_dir }}/secret/jgroups.jceks"
+    owner: root
+    group: root
+    mode: 0770
+
+- name: Check already exist jdv ServiceAccount
+  command: oc get sa datavirt-service-account -n {{ project_name }}
+  register: jdv_sa
+  ignore_errors: True
+  changed_when: False
+
+- name: Create jdv ServiceAccount
+  command: oc create sa datavirt-service-account -n {{ project_name }}
+  when: jdv_sa.rc != 0
+
+- name: Check scc role for jdv
+  shell: oc get rolebinding view -n {{ project_name }} | grep datavirt-service-account
+  register: jdv_role
+  ignore_errors: True
+  changed_when: False
+
+- name: Add view role to jdv serviceaccount
+  command: oc adm policy add-role-to-user view -z datavirt-service-account -n {{ project_name }}
+  when: jdv_role.rc != 0
+
+
+- name: Check jdv keystore secret
+  command: oc get secret datavirt-app-secret -n {{ project_name }}
+  register: jdv_ks_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Create jdv keystore secret
+  command: oc secret new datavirt-app-secret {{ jdv_conf_dir }}/secret/keystore.jks {{ jdv_conf_dir }}/secret/jgroups.jceks -n {{ project_name }}
+  when: jdv_ks_secret.rc != 0 
+
+- name: Check jdv datasource secret
+  command: oc get secret datavirt-app-config -n {{ project_name }}
+  register: jdv_ds_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Create jdv datasource secret
+  command: oc secret new datavirt-app-config {{ jdv_conf_dir }}/secret/datasource.env -n {{ project_name }}
+  when: jdv_ds_secret.rc != 0
+
+- name: Check jks secret link to serviceaccount
+  shell: oc export sa datavirt-service-account -n {{ project_name }} | grep datavirt-app-secret
+  register: jdv_secret_jks_link
+  ignore_errors: True
+  changed_when: False
+
+- name: Link jdv jks secret to serviceaccount
+  command: oc secrets link datavirt-service-account datavirt-app-secret -n {{ project_name }}
+  when: jdv_secret_jks_link.rc != 0
+
+- name: Check datasource secret link to serviceaccount
+  shell: oc export sa datavirt-service-account -n {{ project_name }} | grep datavirt-app-config
+  register: jdv_secret_ds_link
+  ignore_errors: True
+  changed_when: False
+
+- name: Link jdv datasource secret to serviceaccount
+  command: oc secrets link datavirt-service-account datavirt-app-config -n {{ project_name }}
+  when: jdv_secret_ds_link.rc != 0
+
+
+- name: Check gitbucket pull secret
+  command: oc get secret gitbucket-pull-secret -n {{ project_name }}
+  register: jdv_git_secret
+  ignore_errors: True
+  changed_when: False
+
+- name: Create gitbucket pull secret
+  command: oc create secret generic gitbucket-pull-secret --from-literal=username={{ jdv_git_pull_user_name }} --from-literal=password={{ jdv_git_pull_password }} --from-file=.gitconfig={{ jdv_conf_dir }}/secret/.gitconfig --type=kubernetes.io/basic-auth -n {{ project_name }}
+  when: jdv_git_secret.rc != 0 
+
+- name: Check jdv input imagestream
+  shell: oc get istag {{ jdv_input_is_name }}:{{ jdv_input_is_version }} -n {{ project_name }}
+  register: jdv_input_is
+  ignore_errors: True
+  changed_when: False
+
+- name: Create jdv input imagestream
+  command: oc import-image {{ jdv_input_is_name }}:{{ jdv_input_is_version }} --from {{ jdv_image_import_repo }} --insecure=true --confirm -n {{ project_name }}
+
+- name: Add latest tag to import image
+  command: oc tag {{ jdv_input_is_name }}:{{ jdv_input_is_version }} {{ jdv_input_is_name }}:latest -n {{ project_name }}
+
+- name: Check jdv template
+  shell: oc get template/{{ jdv_template_name }} -n {{ project_name }}
+  register: jdv_template
+  ignore_errors: True
+  changed_when: False
+
+- name: Create jdv template
+  command: oc create -f {{ jdv_conf_dir }}/template/template.yml -n {{ project_name }}
+  when: jdv_template.rc != 0
+
+- name: Check jdv deploymentconfig
+  command: oc get dc {{ jdv_apl_name }} -n {{ project_name }}
+  register: jdv_dc
+  ignore_errors: True
+  changed_when: False
+
+- name: Deploy jdv container
+  command: oc new-app {{ jdv_template_name }} {{ jdv_template_param }} -n {{ project_name }}
+  when: jdv_dc.rc != 0
+
+- name: Rollout jdv container
+  command: oc rollout latest {{ jdv_apl_name }} -n {{ project_name }}
+  when: jdv_dc.rc == 0
+
+- name: Delete directory for jdv config dir
+  file:
+    path: "{{ jdv_conf_dir }}"
+    state: absent
+
+...

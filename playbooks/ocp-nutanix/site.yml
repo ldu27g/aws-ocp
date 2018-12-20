@@ -1,0 +1,9 @@
+---
+
+
+- name: Create Cloone VM
+  hosts: vm
+  tasks:
+
+    - include_role:
+        name: nx_vm_clone

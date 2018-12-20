@@ -1,0 +1,15 @@
+---
+
+
+- name: Create OpenShift User And Set Password
+  htpasswd:
+    path: "{{ vars_ls_ocp_user_path | default('/etc/origin/master/htpasswd') }}"
+    name: "{{ item.username }}"
+    password: "{{ item.password | default(omit)}}"
+    state: "{{ item.state | default('present') }}"
+  with_items: "{{ vars_ls_ocp_user }}"
+  
+- name: Delete OpenShift User 
+  shell: "oc delete user {{ item.username }}"
+  with_items: "{{ vars_ls_ocp_user }}"
+  when: ( item.state == "absent" )

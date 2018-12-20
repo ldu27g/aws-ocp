@@ -1,0 +1,9 @@
+---
+
+
+- name: pre requires
+  hosts: lb
+  tasks:
+    - include_role:
+        name: ls_ocp_os_lb
+

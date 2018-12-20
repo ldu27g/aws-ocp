@@ -1,0 +1,29 @@
+---
+
+#- name: Add label to node
+#  shell: oc label node {{  vars_ocp_elasticsearch_node }} {{  vars_ocp_elasticsearch_nodeselector }} --overwrite
+#  ignore_errors: true
+
+- name: Add scc to default serviceaccount
+  shell: oc adm policy add-scc-to-user {{  vars_ocp_elasticsearch_sa_scc }} -z {{  vars_ocp_elasticsearch_sa_name }} -n {{  vars_ocp_elasticsearch_project }}
+  ignore_errors: true
+
+- name: Create patch templates
+  local_action: template \
+                   src="{{ item }}" \
+                   dest='{{ role_path }}/cache/{{ item.split(".")[0] }}.json'
+  with_items:
+    - "containers.j2"
+    - "volume.j2"
+
+- name: Check deploymentconfig
+  shell: oc get dc --selector {{  vars_ocp_elasticsearch_nodeselector }} -o name -n {{  vars_ocp_elasticsearch_project }}
+  register: reg_dc
+  changed_when: false
+
+- name: Configure Elasticsearch Deploymentconfig
+  include_tasks: config_dc.yml
+  loop_control:
+    loop_var: argument
+  with_items: 
+    - "{{ reg_dc.stdout_lines }}"

@@ -1,0 +1,15 @@
+---
+kind: Route
+apiVersion: v1
+metadata:
+  labels:
+    expose: "true"
+    component: zipkin
+  name: zipkin
+spec:
+  port:
+    targetPort: 9411
+  to:
+    kind: Service
+    name: zipkin
+...

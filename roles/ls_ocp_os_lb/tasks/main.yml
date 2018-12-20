@@ -1,0 +1,117 @@
+---
+
+    
+- name: set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: delete repository
+  raw: rm -rf /etc/yum.repos.d/*
+
+- name: add repository
+  copy:
+    src: Acom.repo
+    dest: /etc/yum.repos.d/acom.repo
+
+- name: yum clean all
+  raw: yum clean all
+
+- name: utils install
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ vars_ls_ocp_os_rpms }}"
+  when: ( vars_ls_ocp_os_rpms is defined )
+
+- name: template hosts
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+  when: ( vars_ls_ocp_os_lb_hosts is defined )
+
+- name: disable firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: enable NetworkManager
+  systemd:
+    name: NetworkManager
+    state: started
+    enabled: yes
+
+- name: template dnsmasq.conf
+  template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.conf
+
+- name: enable dnsmasq
+  systemd:
+    name: dnsmasq
+    state: started
+    enabled: yes
+
+- name: modify /etc/chrony.conf
+  lineinfile:
+    path: /etc/chrony.conf
+    line: "{{ item }}"
+  with_items:
+    - "allow 0.0.0.0/0"
+    - "local stratum 10"
+  register: chrony_changed
+
+- name: restart chronyd
+  systemd:
+    name: chronyd
+    state: restarted
+  when: ( chrony_changed.changed )
+
+
+- name: modify journald.conf - SystemMaxUse
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^.*SystemMaxUse"
+    line: " SystemMaxUse={{ vars_ls_ocp_os_journal_size }}"
+  when: ( vars_ls_ocp_os_journal_size is defined )
+  register: journald_change_1
+
+- name: modify journald.conf - SystemMaxFileSize
+  lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^.*SystemMaxFileSize"
+    line: "#SystemMaxFileSize="
+  when: ( vars_ls_ocp_os_journal_size is defined )
+  register: journald_change_2
+
+- name: restart journald
+  systemd:
+    name: systemd-journald
+    state: restarted
+  when: ( journald_change_1.changed ) or
+        ( journald_change_2.changed )
+
+- name: iptables add dns port - TCP -
+  lineinfile:
+    path: /etc/sysconfig/iptables
+    regexp: "-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT"
+    line: "-A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT"
+    insertbefore: "COMMIT"
+  register: rg_ipt_1
+
+- name: iptables add dns port - UDP -
+  lineinfile:
+    path: /etc/sysconfig/iptables
+    regexp: "-A OS_FIREWALL_ALLOW -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT"
+    line: "-A OS_FIREWALL_ALLOW -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT"
+    insertbefore: "COMMIT"
+  register: rg_ipt_2
+
+- name: restart iptables
+  systemd:
+    name: iptables
+    state: restarted
+  when : ( rg_ipt_1.changed ) or
+         ( rg_ipt_2.changed )
+
+

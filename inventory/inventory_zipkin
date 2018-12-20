@@ -1,0 +1,25 @@
+[OSE:children]
+ocp-master
+
+[OSE:vars]
+ansible_ssh_user=acom
+ansible_become=yes
+
+[ocp-master]
+ocp-master01.acom.local
+
+[ocp-master:vars]
+ocp_user=acom
+ocp_password=acom
+project_name=zipkin
+ocp_zipkin_present=true
+
+zipkin_conf_dir=/tmp/zipkin
+zipkin_replica_size=3
+zipkin_storage_type=elasticsearch
+zipkin_es_hosts=https://logging-es.logging.svc.cluster.local:9200
+zipkin_java_opts=-Djavax.net.ssl.trustStore=/var/run/secrets/java.io/keystores/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit -Djava.security.egd=file:/dev/./urandom
+zipkin_requests_cpu=0
+zipkin_requests_memory=0
+zipkin_limit_cpu=0
+zipkin_limit_memory=0

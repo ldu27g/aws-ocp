@@ -1,0 +1,83 @@
+---
+
+- name: 既存パーテョション確認
+  raw: fdisk -l {{ item.devname }} | grep "Disk label type" | xargs echo
+  changed_when: false
+  register: pt1
+  with_items: "{{ vars_ls_partition }}"
+  tags:
+    - os_reboot
+
+- name: パーティションテーブル作成
+  raw: parted -s -a optimal {{ item.0.devname }} mklabel {{ item.0.labeltype | default('msdos') }}
+  when: ( item.1.stdout_lines[0] == "" )
+  register: pt1_1
+  with_together:
+    - "{{ vars_ls_partition }}"
+    - "{{ pt1.results }}"
+  tags:
+    - os_reboot
+
+- name: パーテョション存在確認
+  raw: /usr/sbin/fdisk -l {{ item.devname }} | tail -n 1 | awk '{ print $1 }'
+  changed_when: false
+  register: pt2
+  with_items: "{{ vars_ls_partition }}"
+  tags:
+    - os_reboot
+
+- name: パーティション作成_ext4
+  raw: parted -s -a optimal {{ item.0.devname }} -- mkpart {{ item.0.parttype | default('primary') }} {{ item.0.fstype }} -1s
+  when: ( item.0.devname not in item.1.stdout_lines[0] ) and
+        ( item.0.fstype == "83" )
+  register: pt3
+  with_together:
+    - "{{ vars_ls_partition }}"
+    - "{{ pt2.results }}"
+  tags:
+    - os_reboot
+
+- name: パーティション作成_lvm
+  raw: parted -s -a optimal {{ item.0.devname }} -- mkpart {{ item.0.parttype | default('primary') }} 83 -1s set 1 lvm on
+  when: ( item.0.devname not in item.1.stdout_lines[0] ) and
+        ( item.0.fstype == "8e" )
+  register: pt3
+  with_together:
+    - "{{ vars_ls_partition }}"
+    - "{{ pt2.results }}"
+  tags:
+    - os_reboot
+
+- name: ファイルシステム作成
+  filesystem:
+    dev: "{{ item.0.devname }}"
+    fstype: "{{ item.0.fstype }}"
+  when: ( item.1.changed )
+  with_together:
+    - "{{ vars_ls_partition }}"
+    - "{{ pt3.results }}"
+  tags:
+    - os_reboot
+
+- name: LVM作成
+  include: create_lvm.yml
+  when: ( vars_ls_vg is defined ) and
+        ( vars_ls_lv is defined )
+  tags:
+    - os_reboot
+
+- name: ディレクトリデータ移行
+  include: copy_fs.yml
+  when: ( vars_ls_mount is defined )
+  with_items: "{{ vars_ls_mount }}"
+  loop_control:
+    loop_var: argument
+  tags:
+    - os_reboot
+
+- name: fstab登録
+  include: mount_fs.yml
+  when: ( vars_ls_mount is defined )
+  tags:
+    - os_reboot
+

@@ -1,0 +1,8 @@
+---
+
+- name: OpenShift Fluentd setting
+  hosts: masters[0]
+  roles:
+    - ocp_fluentd
+
+

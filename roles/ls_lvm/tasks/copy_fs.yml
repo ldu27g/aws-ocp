@@ -1,0 +1,79 @@
+---
+
+- name: 既存マウント状況確認
+  raw: df | grep {{ argument.mpoint }} | awk '{ print $6 }' | xargs echo
+  register: ap
+  changed_when: false
+
+- name: マウントポイント存在確認
+  stat:
+    path: "{{ argument.mpoint }}"
+  register: p
+  changed_when: false
+  when: ( argument.mpoint != ap.stdout_lines[0] )
+
+- name: マウントポイント作成
+  file:
+    dest: "{{ argument.mpoint }}"
+    state: directory
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is not defined )
+
+- name: tempディレクトリ作成
+  file:
+    dest: "/tmp/ansible-mount-temp"
+    state: directory
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+
+- name: LVMマウント
+  mount:
+    name: "/tmp/ansible-mount-temp"
+    src: "{{ argument.devname }}"
+    fstype: "{{ argument.fstype }}"
+    state: mounted
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+
+- name: 空ディレクトリ確認
+  raw: ls {{ argument.mpoint }}
+  register: df
+  changed_when: false
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+
+- name: 領域コピー
+  raw: cp -ax {{ argument.mpoint }}/* /tmp/ansible-mount-temp
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir ) and
+        ( df is defined ) and
+        ( "" != df.stdout_lines[0] )
+
+- name: LVMアンマウント
+  mount:
+    name: "/tmp/ansible-mount-temp"
+    state: unmounted
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+
+- name: tempディレクトリfstab登録削除
+  mount:
+    name: "/tmp/ansible-mount-temp"
+    state: absent
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+
+- name: tempディレクトリ削除
+  file:
+    dest: "/tmp/ansible-mount-temp"
+    state: absent
+  when: ( p.stat is defined ) and
+        ( p.stat.isdir is defined ) and
+        ( p.stat.isdir )
+

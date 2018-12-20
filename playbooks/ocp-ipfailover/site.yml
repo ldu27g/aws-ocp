@@ -1,0 +1,7 @@
+---
+
+- name: Create ipfailover
+  hosts: masters[0]
+  roles:
+    - role: ocp_ipfailover
+

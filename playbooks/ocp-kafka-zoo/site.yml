@@ -1,0 +1,18 @@
+---
+
+- name: Config kafka directory
+  hosts: ocp-infra
+  roles:
+    - role: config_data_dir
+
+- name: Config zookeeper directory
+  hosts: ocp-infra
+  roles:
+    - role: config_data_dir
+
+- name: Config kafka coitanier
+  hosts: ocp-master
+  roles:
+    - role: ocp_kafka_zoo
+
+...

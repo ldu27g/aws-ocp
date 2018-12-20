@@ -1,0 +1,21 @@
+---
+
+openshift_grafana_serviceaccount_name: grafana
+openshift_grafana_namespace: openshift-grafana
+openshift_grafana_prometheus_namespace: "{{ openshift_prometheus_namespace | default('openshift-metrics') }}"
+openshift_grafana_prometheus_serviceaccount: "{{ openshift_prometheus_serviceaccount_name | default('prometheus') }}"
+ocp_grafana_datasource_name: prometheus
+ocp_grafana_dashboard_name: acom
+
+openshift_grafana_datasource_payload:
+  name: grafana_name
+  type: prometheus
+  typeLogoUrl: ''
+  access: proxy
+  url: https://prometheus_url
+  basicAuth: false
+  withCredentials: false
+  jsonData:
+    tlsSkipVerify: true
+    token: satoken
+

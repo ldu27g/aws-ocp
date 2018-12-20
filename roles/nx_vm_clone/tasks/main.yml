@@ -1,0 +1,9 @@
+---
+
+- include_tasks: nx_vm_create.yml
+  when: ( vars_nx_vm is defined )
+- include_tasks: nx_vm_power.yml
+  when: ( vars_nx_vm is defined )
+- include_tasks: nx_vm_delete.yml
+  when: ( vars_nx_vm_delete is defined )
+

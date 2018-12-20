@@ -1,0 +1,12 @@
+---
+
+- name: os再起動
+  shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+  poll: 0
+  async: 1
+
+- name: 再起動待機
+  local_action: wait_for host={{ inventory_hostname }} port=22 state=started delay=10 timeout=300
+  become: yes
+  become_user: root
+

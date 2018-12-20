@@ -1,0 +1,19 @@
+---
+
+- name: Create OpenShift User And Set Password
+  hosts: masters
+  tasks:
+
+    - include_role:
+        name: ocp_user
+        tasks_from: create-user.yml
+
+
+- name: Add Role To User
+  hosts: masters[0]
+  become: yes
+  tasks:
+
+    - include_role:
+        name: ocp_user
+        tasks_from: add-role.yml
