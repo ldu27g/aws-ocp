@@ -6,7 +6,7 @@
   tasks:
     - include_role:
         name: ls_lvm
-      when: ( vars_ls_partition is dedined )
+      when: ( vars_ls_partition is defined )
 
     - include_role:
         name: ls_ocp_os
