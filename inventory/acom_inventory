@@ -6,7 +6,7 @@ ose3-master01.acom.local
 
 [nodes]
 ose3-master01.acom.local openshift_node_group_name='node-config-master-infra'
-ose3-node0[1:2].acom.local openshift_node_group_name='node-config-compute'
+ose3-node0[1:3].acom.local openshift_node_group_name='node-config-compute'
 
 [OSEv3:children]
 masters
