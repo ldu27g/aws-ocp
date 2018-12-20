@@ -33,9 +33,9 @@ openshift_clock_enabled=true
 openshift_docker_options="--log-driver=json-file --log-opt max-size=1M  --log-opt max-file=3 --signature-verification=false --insecure-registry=172.31.0.0/16"
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++
-openshift_master_default_subdomain=54.180.165.214.xip.io
-#openshift_master_cluster_hostname=ose3-lb.test.example.com
-#openshift_master_cluster_public_hostname=
+openshift_master_default_subdomain=riza.acom.local
+openshift_master_cluster_hostname=ose3-master.acom.local
+openshift_master_cluster_public_hostname=ose3-master.acom.local
 #+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # Configure the multi-tenant SDN plugin (default is 'redhat/openshift-ovs-subnet')
@@ -67,7 +67,7 @@ os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
 #openshift_docker_insecure_registries=registry.example.com
 #openshift_docker_additional_registries=registry.example.com
 oreg_url=registry.redhat.io/openshift3/ose-${component}:${version}
-oreg_auth_user=defeat
+oreg_auth_user=zafeet
 oreg_auth_password='Zaq12wsx#'
 
 # OpenShift repository configuration
@@ -76,7 +76,7 @@ oreg_auth_password='Zaq12wsx#'
 
 # htpasswd auth
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
-openshift_master_htpasswd_users={'acom': 'acom'}
+#openshift_master_htpasswd_users={'acom': 'acom'}
 
 # LDAP auth
 #openshift_master_identity_providers=[{'name': 'my_ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider', 'attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': '', 'bindPassword': '', 'insecure': 'false', 'url': 'ldap://ldap.example.com:389/ou=users,dc=example,dc=com?uid'}]
@@ -136,23 +136,28 @@ openshift_master_htpasswd_users={'acom': 'acom'}
 # openshift_cluster_monitoring_operator_alertmanager_storage_capacity="2Gi"
 
 # Logging deployment
-#openshift_logging_install_logging=true
 openshift_logging_install_logging=true
-openshift_logging_es_cluster_size=1
+openshift_logging_es_cluster_size=3
+openshift_logging_es_memory_limit=2G
+openshift_logging_es_allow_external=true
+openshift_logging_es_number_of_shards=3
+openshift_logging_es_number_of_replicas=1
+openshift_logging_curator_default_days=7
+openshift_logging_curator_run_hour=12
+openshift_logging_curator_run_minute=12
+openshift_logging_curator_run_timezone=UTC
 openshift_logging_es_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
 openshift_logging_kibana_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
 openshift_logging_curator_nodeselector={"kubernetes.io/hostname": "ose3-node01.acom.local"}
-#openshift_logging_kibana_hostname=logging.apps.example.com
-#openshift_logging_nodeselector=
 
 # Enable service catalog
 openshift_enable_service_catalog=true
-# Enable template service broker (requires service catalog to be enabled, above)
 template_service_broker_install=true
 
 # Admission plugin config
 #openshift_master_admission_plugin_config={"ProjectRequestLimit":{"configuration":{"apiVersion":"v1","kind":"ProjectRequestLimitConfig","limits":[{"selector":{"admin":"true"}},{"maxProjects":"1"}]}},"PodNodeConstraints":{"configuration":{"apiVersion":"v1","kind":"PodNodeConstraintsConfig"}}}
 
 # Enable API service auditing
-openshift_master_audit_config={"enabled": true, "auditFilePath": "/var/log/ocp-audit.log", "maximumFileRetentionDays": 14, "maximumFileSizeMegabytes": 500, "maximumRetainedFiles": 5}
+openshift_master_audit_config={"enabled": true}
+#openshift_master_audit_config={"enabled": true, "auditFilePath": "/var/log/ocp-audit.log", "maximumFileRetentionDays": 14, "maximumFileSizeMegabytes": 500, "maximumRetainedFiles": 5}
 
