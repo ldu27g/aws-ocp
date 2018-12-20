@@ -22,6 +22,7 @@ OSE:
       - "git"
       - "chrony"
     vars_ls_ocp_os_journal_size: "10M"
+    vars_ls_ocp_os_dockerops: "--log-driver=json-file --log-opt max-size=1M --log-opt max-file=3 --signature-verification=false  --insecure-registry 172.30.0.0/16"
  
 masters:
   hosts:
