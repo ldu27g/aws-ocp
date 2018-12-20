@@ -4,16 +4,16 @@
   hostname:
     name: "{{ inventory_hostname }}"
 
-- name: delete repository
-  raw: rm -rf /etc/yum.repos.d/*
+#- name: delete repository
+#  raw: rm -rf /etc/yum.repos.d/*
 
-- name: add repository
-  copy:
-    src: Acom.repo
-    dest: /etc/yum.repos.d/acom.repo
+#- name: add repository
+#  copy:
+#    src: Acom.repo
+#    dest: /etc/yum.repos.d/acom.repo
 
-- name: yum clean all
-  raw: yum clean all
+#- name: yum clean all
+#  raw: yum clean all
 
 - name: utils install
   yum:
@@ -22,34 +22,34 @@
   with_items: "{{ vars_ls_ocp_os_rpms }}"
   when: ( vars_ls_ocp_os_rpms is defined )
 
-- name: enable NetworkManager
-  systemd:
-    name: NetworkManager
-    state: started
-    enabled: yes
+#- name: enable NetworkManager
+#  systemd:
+#    name: NetworkManager
+#   state: started
+#    enabled: yes
 
-- name: Get NetworkManager DNS Settings
-  raw: nmcli c show eth0 | grep ipv4.dns{{':'}} | awk '{print $2}'
-  register: networkmanager
-  changed_when: False
+#- name: Get NetworkManager DNS Settings
+#  raw: nmcli c show eth0 | grep ipv4.dns{{':'}} | awk '{print $2}'
+#  register: networkmanager
+#  changed_when: False
 
-- name: set fact
-  set_fact:
-    compare_nameserver: "{{ vars_ls_ocp_os_nameserver | join(',') }}"
+#- name: set fact
+#  set_fact:
+#    compare_nameserver: "{{ vars_ls_ocp_os_nameserver | join(',') }}"
 
-- name: set fact
-  set_fact:
-    nameserver: "{{ vars_ls_ocp_os_nameserver | join(' ') }}"
+#- name: set fact
+#  set_fact:
+#    nameserver: "{{ vars_ls_ocp_os_nameserver | join(' ') }}"
 
-- name: modify NetworkManager DNS Settings
-  raw: nmcli c mod eth0 ipv4.dns "{{ nameserver }}"
-  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
+#- name: modify NetworkManager DNS Settings
+#  raw: nmcli c mod eth0 ipv4.dns "{{ nameserver }}"
+#  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
 
-- name: restart NetworkManager
-  systemd:
-    name: NetworkManager
-    state: restarted
-  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
+#- name: restart NetworkManager
+#  systemd:
+#    name: NetworkManager
+#    state: restarted
+#  when: ( compare_nameserver != networkmanager.stdout_lines.0 )
 
 - name: modify docker file
   lineinfile:

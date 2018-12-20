@@ -16,7 +16,7 @@ all:
       - "psacct"
       - "NetworkManager"
       - "docker"
-      - "atomic-openshift-utils"
       - "git"
+      - "chrony"
     vars_ls_ocp_os_journal_size: "10M"
  
