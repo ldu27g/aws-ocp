@@ -1,4 +1,5 @@
 用途 | 環境変数名 | 値(サンプル)
+:--- | :--- | :---
 JDV接続先ホスト | JDV_CONNECT_HOST | jdbc:teiid:kaiyakutesuto@mm://jdv.riza-jdv.svc.cluster.local:3100
 JDV接続ユーザ | JDV_CONNECT_USER | teiiduser
 JDV接続パスワード | JDV_CONNECT_PASSWORD | 12qwaszx
@@ -11,6 +12,7 @@ Kafka接続ユーザ | KAFKA_CONNECT_USER | riza-event-user
 Kafka接続パスワード | KAFKA_CONNECT_PASSWORD | 12qwaszx
 
 用途 | 環境変数名 | 値(サンプル)
+:--- | :--- | :---
 DB接続先URL | DB_CONNECT_URL | jdbc:db2:@mm://10.205.201.120:50000/DDP6:retrieveMessagesFromServerOnGetMessage=true;emulateParameterMetaDataForZCalls=1;
 DB接続先ホスト | DB_CONNECT_HOST | 10.205.201.120
 DB接続先ポート | DB_CONNECT_PORT | 50000
