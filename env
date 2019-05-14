@@ -1,0 +1,21 @@
+用途 | 環境変数名 | 値(サンプル)
+JDV接続先ホスト | JDV_CONNECT_HOST | jdbc:teiid:kaiyakutesuto@mm://jdv.riza-jdv.svc.cluster.local:3100
+JDV接続ユーザ | JDV_CONNECT_USER | teiiduser
+JDV接続パスワード | JDV_CONNECT_PASSWORD | 12qwaszx
+Kieserver接続先ホスト | KIE_CONNECT_HOST | jdv.riza-jdv.svc.cluster.local
+Kieserver接続プロトコル | KIE_CONNECT_PROTOCOL | http
+Kieserver接続ユーザ | KIE_CONNECT_USERNAME | rhdmadmin
+Kieserver接続パスワード | KIE_CONNECT_PASSWORD | 12qwaszx
+Kafka接続先ホスト | KAFKA_CONNECT_HOST | my-cluster-kafka-bootstrap.riza-event.svc.cluster.local:9092
+Kafka接続ユーザ | KAFKA_CONNECT_USER | riza-event-user
+Kafka接続パスワード | KAFKA_CONNECT_PASSWORD | 12qwaszx
+
+用途 | 環境変数名 | 値(サンプル)
+DB接続先URL | DB_CONNECT_URL | jdbc:db2:@mm://10.205.201.120:50000/DDP6:retrieveMessagesFromServerOnGetMessage=true;emulateParameterMetaDataForZCalls=1;
+DB接続先ホスト | DB_CONNECT_HOST | 10.205.201.120
+DB接続先ポート | DB_CONNECT_PORT | 50000
+データベース名 | DB_DATABASE | DDP6
+JDBCドライバ名 | DB_JDBC_DRIVER | ibmdb2
+JNDI名 | DB_JNDI | java:/New_DB2_for_Linux_UNIX_and_Windows_DS
+DB接続ユーザ | DB_CONNECT_USER | TD01169
+DB接続パスワード | DB_CONNECT_PASSWORD | 12qwaszx
